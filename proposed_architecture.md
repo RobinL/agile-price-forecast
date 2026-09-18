@@ -1,8 +1,8 @@
 # Proposed architecture
 
-Revised 18 September 2026. This is a proposal based on the existing experiments; the hosted service and the cost controls below have not yet been built or configured.
+Revised 18 September 2026. The local service, bounded R2 transport and opt-in Actions workflows are implemented. Cloud resources and hosted publishing have not been configured; the first live integration will be a guided, user-led setup.
 
-The historical results and code referenced here belong to the separate initial research archive. [RESEARCH.md](RESEARCH.md) locates that evidence. **The selected research model now runs locally:** five free feeds, monthly input/outcome/prediction history, saved tree models, a seven-day JSON export and stacked Vega-Lite charts. The simple linear recipe remains available for comparison and demos. [README.md](README.md) documents the commands; [MODEL_VALIDATION.md](MODEL_VALIDATION.md) records parity and accuracy checks. R2, Actions and Pages remain planned.
+The historical results and code referenced here belong to the separate initial research archive. [RESEARCH.md](RESEARCH.md) locates that evidence. **The selected research model now runs locally:** five free feeds, monthly input/outcome/prediction history, saved tree models, a seven-day JSON export and stacked Vega-Lite charts. The simple linear recipe remains available for comparison and demos. [README.md](README.md) documents the commands; [MODEL_VALIDATION.md](MODEL_VALIDATION.md) records parity and accuracy checks. [Cloud setup](CLOUD_SETUP.md) explains the implemented transport and deployment steps still to verify live.
 
 **The basic idea**
 
@@ -10,7 +10,7 @@ The historical results and code referenced here belong to the separate initial r
 
 GitHub holds the instructions. GitHub Actions periodically runs the Python forecasting program. Private Cloudflare R2 storage remembers the data and fitted models between runs. The job then publishes only the files needed by the website to GitHub Pages. A million visitors therefore cause the same scheduled forecasting and R2 work as one visitor.
 
-Think of R2 as a private cupboard of files. Each Actions run takes out the few files it needs, does its calculations, puts the new results back, and shuts down. pandas organises the local Parquet tables; DuckDB remains an optional future tool. There is no database server to administer.
+Think of R2 as a private cupboard of files. Initially each Actions run downloads a compressed copy of the operational state folder, does its calculations, puts a new copy back, and shuts down. pandas organises the local Parquet tables; DuckDB remains an optional future tool. There is no database server to administer.
 
 The target service is a half-hourly Agile import-price forecast for the next seven days, updated approximately hourly. The local implementation emits 336 future settlement intervals plus today so far, usually eight calendar dates with a partial final day. The measured research window remains 48–72 hours ahead; later days are experimental. It starts with Region G, matching our experiments, in p/kWh including VAT and excluding standing charges. Already published Octopus prices are distinguished from predictions.
 
@@ -74,7 +74,7 @@ Use **one private R2 bucket** for source records, model inputs, outcomes, foreca
 
 The website's data is a separate **static deployment artifact**, generated inside Actions. It contains only selected forecast JSON and aggregate accuracy JSON, alongside the built HTML, JavaScript and CSS. It is uploaded to GitHub Pages, not served from R2. Build it in a clean directory using an explicit file allowlist; never upload the checkout or the private working directory wholesale.
 
-Within R2, store dated files and monthly Parquet partitions, with a small `current.json` index pointing to the complete current model and working state. Do not keep a live DuckDB/SQLite database open against an R2 object: download files, work locally, then upload completed files.
+Within R2, the first implementation stores complete compressed state bundles containing dated files and monthly Parquet partitions. `forecast-v1/current.json` identifies the current and previous complete bundles and records the writer lease and daily processing count. Separate monthly objects are a future transport optimisation. Do not keep a live DuckDB/SQLite database open against an R2 object: download files, work locally, then upload completed files. The retention table below describes the wider target; diagnostic actuals and full raw provider-response archives are not collected by the current five-feed pipeline. It retains normalised snapshots and source metadata/hashes instead.
 
 | Dataset | What to retain | Why it matters |
 |---|---|---|
@@ -94,8 +94,8 @@ Keep an occasional independent local backup of the durable archive. GitHub's dep
 **What happens on each forecast run**
 
 1. Actions checks out the code and restores the locked Python environment.
-2. It reads R2's current index and downloads the fitted model, recent input records and recent error-correction state.
-3. It fetches new provider data and newly published Octopus prices, recording when they were observed. Unchanged responses are deduplicated.
+2. It reserves a conditional writer lease, reads R2's current index and downloads the operational state bundle. A first-platform refit must reproduce the frozen local reference.
+3. It fetches new provider data and newly published Octopus prices, recording when they were observed. Unchanged prices are deduplicated; each input snapshot keeps its real observation time. The model is refitted when it is at least seven days old.
 4. It checks coverage, units, timestamps and freshness, then constructs the half-hourly model inputs. It uses the documented fallback where an optional input is missing; it must not silently invent a fresh input.
 5. It generates predictions, keeps published prices separately marked, and scores older forecasts whose answers are now available.
 6. It saves the new issue and input snapshot in private R2 and updates the current index only after all referenced files are complete.
@@ -114,9 +114,9 @@ The job's data requirements are deliberately small:
 | Original recent reference forecasts and their completed outcomes | R2 error-correction state |
 | Calendar features and tariff/region settings | Local calculation and configuration |
 
-An hourly inference run does **not** need to download the full training or research archive. The weekly fitting run additionally reads the 400-day daily input/label checkpoint, enough for the longest 365-day training window plus scheduling buffer. It fits a new bundle, checks it, and promotes it only on success. Load model files only from our trusted state store.
+An hourly inference calculation does **not** need the full training archive. For the first small deployment, however, transport deliberately downloads the whole compressed operational state folder on each run, including its monthly history files. This keeps recovery and atomic replacement simple while the bundle is about 42 MB. Training still selects a 400-day window, and the original research project is never transported. Incremental monthly-object downloads remain a later optimisation if needed. The bundle has explicit 256 MB compressed / 512 MB unpacked / 10,000-file limits; exceeding them stops the run rather than deleting permanent history. [Implemented setup](CLOUD_SETUP.md).
 
-Keep a dedicated daily **16:30 Europe/London reference forecast**, alongside hourly issues, because the existing experiments and error correction use this cadence. Do not give 24 overlapping hourly forecasts 24 times the influence in the correction. Record the real issue time if a scheduled run is delayed; do not manufacture an on-time forecast using later information.
+Keep one daily London reference forecast because the existing experiments and error correction use this cadence. The implemented hourly schedule at minute 37 normally supplies a real issue within **16:30–17:30 Europe/London**, in both GMT and BST; the first eligible daily issue is selected. Do not give 24 overlapping hourly forecasts 24 times the influence in the correction. Record the real issue time if a scheduled run is delayed; do not manufacture an on-time forecast using later information.
 
 Use one writer at a time across collection and training, and prevent an older run from deploying over a newer forecast. Upload versioned files first and switch the small index last, retaining the previous good version. Retries should recognise an already completed run. A failed update leaves the last successful forecast visible. The browser calculates its age from the saved issue time and displays a stale indicator without contacting a backend.
 
@@ -196,7 +196,7 @@ Store private local state under ignored `runtime_state/local/`. Put only the sel
 
 Use a local configuration by default. Selecting production storage or publishing should require an explicit command/configuration; the presence of R2 environment variables must not silently switch a local command to production. Separate collection from training and inference so an offline replay cannot unexpectedly fetch revised data. Record the actual snapshot cutoff and forecast issue time, rather than relabelling an old forecast as current.
 
-The following convenience commands **are implemented for local use**. R2 and production scheduling remain to be added:
+The following convenience commands **are implemented for local use**. R2 transport and opt-in production workflows are also implemented, with live integration still to be checked during [guided setup](CLOUD_SETUP.md):
 
 | Command | Intended behaviour |
 |---|---|
@@ -215,7 +215,7 @@ A fresh checkout should support frontend development immediately after dependenc
 
 The public JSON schema is the agreement between Python and the frontend. Check both example files and real exports against it, and run an offline local smoke check from input snapshot through model to built site before enabling deployment. Local preview can check the complete static artifact; real GitHub/Cloudflare permissions and cache behaviour still require a separate deployment check.
 
-**Current status:** local collection, monthly history updates, research training, recent-error correction, saved-model inference, seven-day export, historical comparison, forward scoring, synthetic fixtures and the frontend are implemented. The research model uses private joblib bundles with JSON provenance; the linear baseline retains readable JSON coefficients. Reference issues are the first real collection from 16:30 up to 17:30 London time, never backdated. R2 persistence, bounded retention, production scheduling/promotion checks, Linux parity and Pages publishing remain to be built. Run local state-writing commands sequentially.
+**Current status:** local collection, monthly history updates, research training, recent-error correction, saved-model inference, seven-day export, historical comparison, forward scoring, synthetic fixtures and the frontend are implemented. R2 bundle transport, conditional promotion, current/previous recovery, bounded retention, processing budgets, first-platform parity checks and opt-in Actions/Pages workflows are now implemented too. Local tests cover failure boundaries; real R2 access, the first Linux refit and Pages publishing await user-led setup. No resources, secrets, repository visibility or live schedules have been changed. The research model uses private joblib bundles with JSON provenance; the linear baseline retains readable JSON coefficients. Run local state-writing commands sequentially.
 
 **Secrets and permissions**
 
@@ -287,12 +287,12 @@ Cost protection also needs to cover mistakes in our scheduled job. Proposed star
 |---|---|
 | Fixed schedule and restricted triggers | Hourly refresh, daily reference and weekly refit; only authorised maintainers can request additional work. A site visit cannot launch a run. |
 | Bounded work | At most 32 credentialed processing runs per day, 100 R2 requests per run including retries and pagination, and a 10-minute job timeout. Validate these limits in a dry run before deployment. |
-| Bounded storage | Start with a 2 GB project budget, checked before uploads, including temporary overlap during replacement. Keep the 30-day raw-response lifecycle and current/previous models. Stop new writes and report the problem if the budget would be exceeded; do not silently discard the permanent audit archive. |
+| Bounded storage | A 2 GB dedicated-bucket budget is checked before uploads, including temporary overlap. Transport retains 30 days of redundant normalised snapshots, plus latest/reference snapshots, current/previous model binaries and all model metadata. Permanent history is never silently discarded. Raw provider-response archiving remains a future extension. |
 | Small deployment artifacts | Initially cap the complete public artifact at 10 MB and retain Actions deployment artifacts for one day. Avoid uploading private data or large diagnostics as Actions artifacts. Keep caches within their included allowance. |
 | GitHub billing settings | Before launch, set a zero-paid-usage Actions budget with **Stop usage when budget limit is reached** enabled, at the appropriate scope. Check existing usage and storage too; a new budget does not erase charges already incurred. |
 | Cloudflare billing settings | Keep the site's zone on Free, with paid traffic add-ons disabled. Add a low account-wide spending alert as a secondary warning for the remaining private R2 workload. |
 
-At the proposed processing limits, a 31-day month permits at most 99,200 R2 requests, well below the free operation allowances before other account usage. These are application controls to implement and test, not quotas R2 enforces for us. Initial data seeding and any bulk backfill need their own bounded operation rather than bypassing the limits silently.
+At the processing limits, 32 admitted runs × 100 requests × 31 days gives a ceiling of 99,200 processing requests per month, before manual reads or rejected attempts. These limits are implemented and locally tested application controls, not quotas R2 enforces for us or an account-wide billing cap. Initial seeding uses the same bounded transport and cannot overwrite an existing successful state. Live behaviour still needs the guided trial.
 
 GitHub supports stopping metered usage through budgets. **Cloudflare budget alerts only notify; they do not stop or cap spending.** A bug bypassing our limits, a compromised credential, or unrelated account usage could still produce R2 charges. Eliminating all possible R2 billing would require removing that metered service; this design instead removes the public traffic pathway and bounds our own processing. [GitHub budgets](https://docs.github.com/en/billing/how-tos/set-up-budgets), [budget timing](https://docs.github.com/en/billing/concepts/budgets-and-alerts), [Cloudflare alerts](https://developers.cloudflare.com/billing/manage/budget-alerts/).
 

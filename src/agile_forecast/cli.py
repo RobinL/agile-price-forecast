@@ -29,7 +29,7 @@ from .storage import (
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Local Agile forecasting; no R2 or cloud deployment."
+        description="Local Agile forecasting. Cloud orchestration is a separate agile-cloud command."
     )
     parser.add_argument("--state-dir", type=Path, default=DEFAULT_STATE)
     parser.add_argument(

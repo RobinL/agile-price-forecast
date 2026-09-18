@@ -1,4 +1,4 @@
-"""Small file helpers. Future R2 syncing belongs around this local file boundary."""
+"""Small local file helpers. R2 transport wraps this boundary in cloud_cli.py."""
 
 import json
 from pathlib import Path

@@ -1,6 +1,6 @@
 # Agile price forecast
 
-Python collects electricity forecasts, applies a saved model and writes one small JSON file. A static Vite/Vega-Lite website draws the results as aligned daily charts. Everything runs locally; R2, GitHub Actions and publishing remain later steps.
+Python collects electricity forecasts, applies a saved model and writes one small JSON file. A static Vite/Vega-Lite website draws the results as aligned daily charts. Everything runs locally. An explicit R2 adapter and GitHub Actions workflows now wrap the same pipeline; cloud provisioning and publishing are still disabled pending the [guided setup](CLOUD_SETUP.md).
 
 The app now uses our **selected research ensemble**, with **seven days of half-hourly predictions**. The export includes today so far and a partial final date; the website omits that incomplete final day, normally showing seven full calendar-day charts. Prices are Region G, p/kWh including VAT; standing charges are excluded. Published prices take precedence and missing required inputs leave gaps.
 
@@ -48,7 +48,7 @@ Read these files in roughly this order:
 | File | Responsibility |
 |---|---|
 | `src/agile_forecast/cli.py` | Connect the small list of commands. |
-| `src/agile_forecast/feeds.py` | Download five free feeds and translate provider columns. The only network code. |
+| `src/agile_forecast/feeds.py` | Download five free feeds and translate provider columns. |
 | `src/agile_forecast/features.py` | Build demand curves, calendar features, ratios and changes. |
 | `src/agile_forecast/ensemble.py` | Fit the fixed research recipe and combine its predictions. |
 | `src/agile_forecast/forecast.py` | Prefer published prices, validate and export the public contract. |
@@ -58,6 +58,9 @@ Read these files in roughly this order:
 | `src/agile_forecast/history.py` | One-off private research import; no research-code dependency. |
 | `src/agile_forecast/model.py` | Original, readable linear baseline, retained for comparison and demos. |
 | `src/agile_forecast/demo.py` | Generate made-up examples. |
+| `src/agile_forecast/production.py` | Run the same pipeline, refit weekly and check portability/publication. |
+| `src/agile_forecast/state_bundle.py`, `r2.py`, `cloud_cli.py` | Explicitly transport private state with atomic promotion, recovery and budgets. |
+| `.github/workflows/forecast.yml` | Manual/hourly processing and separately enabled static publishing. |
 | `schemas/forecast.schema.json` | Version 2 agreement between Python and the website. |
 | `web/src/data.ts`, `chart.ts`, `main.ts` | Read the JSON, define the Vega-Lite charts and lay out the page. |
 | `web/src/cheap-periods.ts` | Find the cheapest combination of complete, non-overlapping periods in UTC. |
@@ -200,15 +203,17 @@ runtime_state/demo/                 Separate fictional state and website export
 
 Monthly files use compressed Parquet. New snapshots add inputs, while later observed prices supply their training answers. Price corrections carry their own observation time; rerunning an update does not duplicate rows. Training selects at most 400 days of input issues and uses only outcomes known by its cutoff. There is no database server.
 
-Model metadata records member training dates/counts, a training-data hash, feature/recipe fingerprint, library versions and artifact checksum. Model binaries are **trusted executable serialization**: use only our own local files or their trusted private backup. Checksum checks detect accidental changes; they do not make a malicious model safe. A changed recipe or library environment requires a refit. Automatic promotion preserves a previous pointer, but automated rollback/retention is not implemented.
+Model metadata records member training dates/counts, a training-data hash, feature/recipe fingerprint, library versions and artifact checksum. Model binaries are **trusted executable serialization**: use only our own local files or their trusted private backup. Checksum checks detect accidental changes; they do not make a malicious model safe. A changed recipe or library environment requires a refit. Local fitting preserves a previous pointer; cloud bundles retain current/previous binaries and all model metadata. Rollback is deliberately a manual recovery step.
 
 Keep `runtime_state/` private and backed up. Git ignores it, model binaries, credentials, environments, build output and caches. The Vite server only serves frontend files, dependencies and the chosen public output directory. It cannot serve private state.
 
-## Next infrastructure step
+## Cloud setup
 
-The local pipeline now maintains history and records predictions. Later, GitHub Actions can download the needed private files from R2, run these same commands, and upload completed state. Weekly training will need more history than hourly inference. Only static website output goes to Pages; popularity must never trigger R2 or model execution.
+The [step-by-step guide](CLOUD_SETUP.md) explains the bucket, credentials, initial seed, manual trial and eventual publishing. **No cloud resources have been created or changed.** Hourly processing and Pages deployment are separately disabled until their repository variables are enabled. The repository remains private; nothing in the workflows changes its visibility.
 
-Still to implement: R2 sync/manifests, single-writer scheduling, bounded storage retention, cold recovery and Linux production parity, automated fit/promotion checks, and Pages deployment. Current readers load local monthly tables; a bounded production working set remains engineering work. No cloud writes or schedules are included in this milestone.
+Initially the runner downloads one compressed state bundle, including the monthly history files, and uploads a new bundle after a successful forecast. A conditional pointer is promoted last. The current and previous bundles are retained, with request, processing and storage budgets. Only the checked static website goes to Pages; popularity cannot start R2 requests or model execution. The bundle format has explicit size limits; incremental monthly-object transport is a later improvement if history outgrows them.
+
+`make prepare-cloud-seed` creates an ignored private seed **offline**, without touching R2. The first cloud run refits and compares against its saved local predictions. That Linux check and real R2/Pages integration still need the guided trial; local tests do not establish cloud deployment success.
 
 For another model, add a separate recipe and compare it prospectively rather than changing historical results. For another feed, add its normalizer and archive actual forecast vintages before relying on a backtest. The website need not change unless the public contract changes.
 
@@ -223,4 +228,4 @@ make test
 make build
 ```
 
-Tests cover historical availability, recent-error maturity, complete-window adjustment, missing inputs, price revisions, model checksums, demo isolation, seven-day/DST intervals, public export validation, desktop/mobile charts and the private-file boundary. `make format` applies the formatters. The offline research parity command requires the private archive and runs separately from synthetic CI tests.
+Tests cover historical availability, recent-error maturity, complete-window adjustment, missing inputs, price revisions, model checksums, demo isolation, seven-day/DST intervals, public export validation, desktop/mobile charts and the private-file boundary. Cloud tests exercise conditional promotion, failure recovery, leases, budgets, archive integrity and the public artifact allowlist without credentials. `make format` applies the formatters. The offline research parity command requires the private archive and runs separately from synthetic CI tests.

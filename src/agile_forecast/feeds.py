@@ -1,4 +1,4 @@
-"""The only network code: five free feeds, bounded downloads, no credentials.
+"""Provider network code: five free feeds, bounded downloads, no credentials.
 
 Each provider is normalised here. The model never needs to know CSV column names
 or API URLs. Adding another feed starts with another normaliser in this module.

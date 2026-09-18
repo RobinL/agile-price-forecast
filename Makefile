@@ -41,3 +41,10 @@ verify-research-local:
 	uv run agile-forecast verify-research --from ../initial_experiments
 score-local:
 	uv run agile-forecast score
+
+# Offline preparation and inspection. These commands do not contact R2.
+.PHONY: prepare-cloud-seed check-site
+prepare-cloud-seed:
+	uv run --locked agile-cloud prepare-seed
+check-site:
+	uv run --locked agile-cloud check-site

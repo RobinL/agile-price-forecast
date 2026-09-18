@@ -18,10 +18,12 @@ dependencies = [
     "lightgbm==4.7.0",
     "holidays==0.104",
     "joblib==1.6.0",
+    "boto3>=1.40,<2",
 ]
 
 [project.scripts]
 agile-forecast = "agile_forecast.cli:main"
+agile-cloud = "agile_forecast.cloud_cli:main"
 
 [dependency-groups]
 dev = [
