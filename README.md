@@ -209,11 +209,11 @@ Keep `runtime_state/` private and backed up. Git ignores it, model binaries, cre
 
 ## Cloud setup
 
-The [step-by-step guide](CLOUD_SETUP.md) explains the bucket, credentials, initial seed, manual trial and eventual publishing. **No cloud resources have been created or changed.** Hourly processing and Pages deployment are separately disabled until their repository variables are enabled. The repository remains private; nothing in the workflows changes its visibility.
+The [step-by-step guide](CLOUD_SETUP.md) explains the bucket, credentials, initial seed, manual trial and publishing. Private R2 storage and two Actions forecast runs have been verified, including model reuse. Hourly processing and Pages deployment are separately disabled until their repository variables are enabled. Nothing in the workflows changes repository visibility.
 
 Initially the runner downloads one compressed state bundle, including the monthly history files, and uploads a new bundle after a successful forecast. A conditional pointer is promoted last. The current and previous bundles are retained, with request, processing and storage budgets. Only the checked static website goes to Pages; popularity cannot start R2 requests or model execution. The bundle format has explicit size limits; incremental monthly-object transport is a later improvement if history outgrows them.
 
-`make prepare-cloud-seed` creates an ignored private seed **offline**, without touching R2. The first cloud run refits and compares against its saved local predictions. That Linux check and real R2/Pages integration still need the guided trial; local tests do not establish cloud deployment success.
+`make prepare-cloud-seed` creates an ignored private seed **offline**, without touching R2. The first cloud run refits and compares against its saved local predictions. The Linux and R2 checks have passed; [the guide](CLOUD_SETUP.md) records the live evidence and current Pages status. Local tests alone do not establish cloud deployment success.
 
 For another model, add a separate recipe and compare it prospectively rather than changing historical results. For another feed, add its normalizer and archive actual forecast vintages before relying on a backtest. The website need not change unless the public contract changes.
 

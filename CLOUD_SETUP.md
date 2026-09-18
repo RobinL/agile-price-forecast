@@ -1,8 +1,14 @@
 # Moving the local forecast to GitHub Actions and R2
 
-Nothing has been provisioned or published yet. The repository remains private.
-The workflow files and storage code are ready for a guided setup; live R2 access,
-the first Linux refit, Actions runtime and Pages deployment still need checking.
+The private R2 bucket has been seeded and its download/checksum round trip passed.
+Two Linux Actions forecast runs have passed: the first fitted and checked the
+Linux model in a 64-second job; the second restored and reused it in 48 seconds.
+Both collected fresh data, saved updated R2 state and built a checked live site
+of about 0.99 MB. The repository is still private, with scheduled runs and Pages
+publication disabled pending the repository-visibility decision.
+
+Evidence: [first complete forecast](https://github.com/RobinL/agile-price-forecast/actions/runs/35368521829),
+[saved-model reuse](https://github.com/RobinL/agile-price-forecast/actions/runs/35368747368).
 
 ## What happens on each run
 
@@ -193,8 +199,9 @@ original issue time and stale warning.
   files may enter `dist/`. Dependencies install before the credentialed step;
   Vite builds without R2 secrets in its environment.
 
-These checks are covered by local failure tests. Live S3 conditional-write
-behaviour and the first real Actions/Pages run still require the guided trial.
+These checks are covered by local failure tests. Live R2 restore, conditional
+state promotion and two Actions forecast runs have also succeeded. Pages
+publishing still requires the visibility decision and first deployment.
 If something fails, inspect the Actions log first. Avoid manually replacing
 `current.json` or deleting bundles it references. Old published pages keep
 working while a fix is prepared.

@@ -87,4 +87,4 @@ make score-local
 
 The private outputs are `runtime_state/local/checks/research_parity.json`, `accuracy.json`, `checks/comparison.parquet` and `checks/forward_scores.json`. Running `evaluate-local` against a later snapshot can change its eligible dates and results. This document records the check above; it is not automatically rewritten by training.
 
-The model and raw/history files remain ignored. Only aggregate findings, code and fictional website fixtures belong in Git. R2, Linux Actions execution and public deployment have not been tested in this milestone.
+The model and raw/history files remain ignored. Only aggregate findings, code and fictional website fixtures belong in Git. R2 persistence and two Linux Actions forecast runs were subsequently verified on 18 September 2026, including saved-model reuse. See [cloud setup status](CLOUD_SETUP.md) for deployment evidence and the remaining publishing steps. Those operational checks do not add accuracy evidence.
