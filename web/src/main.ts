@@ -10,12 +10,14 @@ import {
   type Forecast,
 } from "./data";
 import "./style.css";
+import { attachPriceScrubber } from "./price-scrubber";
 import { setupAnalytics } from "./analytics";
 
 setupAnalytics();
 
 const compactLayout = window.matchMedia("(max-width: 600px)");
 const views: Result[] = [];
+const scrubberCleanups: (() => void)[] = [];
 let current: Forecast | undefined;
 let currentLoadedAt: Date | undefined;
 let renderVersion = 0;
@@ -135,6 +137,7 @@ function showPeriods(
 
 async function render(f: Forecast, loadedAt: Date) {
   const version = ++renderVersion;
+  scrubberCleanups.splice(0).forEach((cleanup) => cleanup());
   views.forEach((view) => view.finalize());
   views.length = 0;
   updateNotice(f);
@@ -206,6 +209,7 @@ async function render(f: Forecast, loadedAt: Date) {
       {
         actions: false,
         renderer: "svg",
+        ...(compactLayout.matches ? { tooltip: false } : {}),
       },
     );
     if (version !== renderVersion) {
@@ -213,6 +217,8 @@ async function render(f: Forecast, loadedAt: Date) {
       return;
     }
     views.push(result);
+    if (compactLayout.matches)
+      scrubberCleanups.push(attachPriceScrubber(chart, result.view, slots));
   }
 }
 

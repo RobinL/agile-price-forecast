@@ -212,6 +212,7 @@ h1 {
   margin: 0;
 }
 .price-chart {
+  position: relative;
   width: 100%;
   min-height: 155px;
 }
@@ -288,4 +289,40 @@ select:focus-visible {
   .day-title {
     font-size: 15px;
   }
+}
+
+.price-scrubber {
+  position: absolute;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: ew-resize;
+}
+.price-scrubber:focus-visible {
+  outline: 1px solid #a7b9bf;
+  outline-offset: 3px;
+}
+.scrubber-line {
+  position: absolute;
+  top: 24px;
+  bottom: 0;
+  width: 2px;
+  background: #c7d3d7;
+  box-shadow: 0 0 0 1px #ffffff90;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+.scrubber-price {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  padding: 3px 5px;
+  border-radius: 3px;
+  background: #fffefaee;
+  color: #253c34;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+  white-space: nowrap;
+  pointer-events: none;
 }
