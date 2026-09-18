@@ -84,9 +84,39 @@ def ensure_portable_model(state):
     frame = read_table(state / reference["snapshot"] / "features.csv")
     actual = ensemble.predict(fitted, frame)[reference["columns"]].to_numpy()
     expected = np.asarray(reference["expected"], dtype=float)
-    if actual.shape != expected.shape or not np.allclose(
-        actual, expected, atol=0.001, rtol=0, equal_nan=True
-    ):
+    if actual.shape != expected.shape:
+        raise ValueError(
+            "First production refit differs from the local reference: "
+            f"output shape {actual.shape}, expected {expected.shape}; do not publish."
+        )
+    # Report only aggregate differences, not private input rows or credentials.
+    # These diagnostics are essential when a different CPU/OS fails parity:
+    # measure which member changed before considering any tolerance change.
+    comparisons = {}
+    print(
+        f"Portability comparison on {platform_id()} (tolerance 0.001 p/kWh):",
+        flush=True,
+    )
+    for index, name in enumerate(reference["columns"]):
+        observed, original = actual[:, index], expected[:, index]
+        finite = np.isfinite(observed) & np.isfinite(original)
+        errors = np.abs(observed[finite] - original[finite])
+        differences = ~np.isclose(
+            observed, original, atol=0.001, rtol=0, equal_nan=True
+        )
+        comparisons[name] = {
+            "matched_finite_rows": int(finite.sum()),
+            "rows_outside_tolerance": int(differences.sum()),
+            "missingness_mismatches": int(
+                (np.isnan(observed) != np.isnan(original)).sum()
+            ),
+            "maximum_difference_p_kwh": float(errors.max()) if len(errors) else None,
+            "mean_absolute_difference_p_kwh": float(errors.mean())
+            if len(errors)
+            else None,
+        }
+        print(f"  {name}: {comparisons[name]}", flush=True)
+    if not np.allclose(actual, expected, atol=0.001, rtol=0, equal_nan=True):
         raise ValueError(
             "First production refit differs from the local reference; do not publish."
         )
@@ -97,6 +127,7 @@ def ensure_portable_model(state):
     report = {
         "platform": platform_id(),
         "maximum_difference_p_kwh": maximum,
+        "comparisons": comparisons,
         "model_id": metadata["id"],
         "checked_at": pd.Timestamp.now(tz="UTC").isoformat(),
     }

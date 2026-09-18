@@ -271,7 +271,7 @@ def test_publication_rejects_stale_inputs_or_too_few_predictions():
 
 @pytest.mark.parametrize("difference", [0.0, 0.01])
 def test_first_platform_fit_must_match_before_model_promotion(
-    state, monkeypatch, difference
+    state, monkeypatch, difference, capsys
 ):
     save_json(
         state / "portability.json",
@@ -308,8 +308,18 @@ def test_first_platform_fit_must_match_before_model_promotion(
             production.ensure_portable_model(state)
         assert not promoted
         assert not (state / "production.json").exists()
+        output = capsys.readouterr().out
+        assert "candidate:" in output
+        assert "'rows_outside_tolerance': 1" in output
+        assert "'maximum_difference_p_kwh':" in output
     else:
         production.ensure_portable_model(state)
         production.ensure_portable_model(state)  # Reuse the checked fitted model.
         assert len(promoted) == 1
         assert read_json(state / "production.json")["maximum_difference_p_kwh"] == 0
+        assert (
+            read_json(state / "production.json")["comparisons"]["candidate"][
+                "rows_outside_tolerance"
+            ]
+            == 0
+        )
