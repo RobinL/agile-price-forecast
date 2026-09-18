@@ -117,6 +117,7 @@ def ensure_portable_model(state):
         }
         print(f"  {name}: {comparisons[name]}", flush=True)
     if not np.allclose(actual, expected, atol=0.001, rtol=0, equal_nan=True):
+        diagnose_refit(state, fitted, frame, reference)
         raise ValueError(
             "First production refit differs from the local reference; do not publish."
         )
@@ -134,6 +135,41 @@ def ensure_portable_model(state):
     save_json(state / "checks/linux_parity.json", report)
     save_json(marker, report)
     print(f"Portability refit passed: maximum difference {maximum:.6f} p/kWh.")
+
+
+def diagnose_refit(state, fitted, frame, reference):
+    """Separate saved-model inference portability from platform-dependent refitting.
+
+    Load only our own checksummed, version-checked seed for this diagnostic. It
+    never becomes the production model: production still uses a checked refit.
+    """
+    metadata = read_json(state / "model.json")
+    if metadata.get("kind") != model_store.KIND:
+        return
+    original = model_store.load_research(state, metadata)
+    saved_predictions = ensemble.predict(original, frame)
+    expected = np.asarray(reference["expected"], dtype=float)
+    transported = saved_predictions[reference["columns"]].to_numpy()
+    print(
+        "Saved seed inference matches its original outputs:",
+        bool(np.allclose(transported, expected, atol=0.001, rtol=0, equal_nan=True)),
+        flush=True,
+    )
+    valid = saved_predictions.prediction.notna()
+    for name in ["AP0_60", "AP0_90"]:
+        before, after = original["members"][name], fitted["members"][name]
+        design = ensemble.ap_design(frame.loc[valid], before.cutoff, True)
+        for index, (old, new) in enumerate(
+            zip(before.models, after.models, strict=True)
+        ):
+            old_x = design.fillna(before.medians) if index == 2 else design
+            new_x = design.fillna(after.medians) if index == 2 else design
+            errors = np.abs(new.predict(new_x) - old.predict(old_x))
+            print(
+                f"  {name}/{type(old).__name__}: "
+                f"max={errors.max():.9f}, mean={errors.mean():.9f} p/kWh",
+                flush=True,
+            )
 
 
 def validate_forecast(payload, now=None):
