@@ -34,8 +34,8 @@ test("seven days ahead in aligned daily charts, explicit demo status, local requ
   ).toBeVisible();
   await expect(page.locator("#notice")).toContainText("Made-up data");
   for (const chart of await page.locator(".price-chart").all()) {
-    await expect(chart.getByText("00:00", { exact: true })).toBeVisible();
-    await expect(chart.getByText("24:00", { exact: true })).toBeVisible();
+    await expect(chart.getByText("12am", { exact: true })).toHaveCount(2);
+    await expect(chart.getByText("12pm", { exact: true })).toBeVisible();
     await expect(chart.getByText("0p/kWh", { exact: true })).toBeVisible();
     await expect(chart.getByText("Pence/kWh", { exact: true })).toHaveCount(0);
   }
@@ -247,4 +247,54 @@ test("cheapest-period controls update bars across the whole forecast without fet
   await expect(page.locator("#period-count")).toBeHidden();
   await expect(page.locator("#period-hours")).toBeHidden();
   expect(fetches).toBe(1);
+});
+
+test("am/pm labels adapt on resize, stay aligned and do not overlap", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.locator(".price-chart svg")).toHaveCount(7);
+  const labels = page
+    .locator(".price-chart")
+    .first()
+    .locator(".role-axis-label text")
+    .filter({ hasText: /(?:am|pm)$/ });
+  await expect(labels).toHaveCount(25);
+  for (const width of [320, 390, 768, 1280]) {
+    await page.setViewportSize({ width, height: 900 });
+    await expect(labels).toHaveCount(
+      width === 1280 ? 25 : width === 768 ? 13 : width === 320 ? 5 : 9,
+    );
+    // Each of the seven Vega views handles the resize independently.
+    await expect(
+      page
+        .locator(".price-chart .role-axis-label text")
+        .filter({ hasText: /(?:am|pm)$/ }),
+    ).toHaveCount(
+      (width === 1280 ? 25 : width === 768 ? 13 : width === 320 ? 5 : 9) * 7,
+    );
+    const charts = await page.locator(".price-chart").evaluateAll((charts) =>
+      charts.map((chart) => {
+        const labels = [
+          ...chart.querySelectorAll(".role-axis-label text"),
+        ].filter((label) => /(?:am|pm)$/.test(label.textContent ?? ""));
+        const bounds = labels.map((label) => label.getBoundingClientRect());
+        return {
+          labels: labels.map((label) => label.textContent),
+          overlap: bounds
+            .slice(1)
+            .some((box, index) => bounds[index].right > box.left),
+        };
+      }),
+    );
+    for (const chart of charts) {
+      expect(chart.overlap).toBe(false);
+      expect(chart.labels).toEqual(charts[0].labels);
+    }
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+  }
 });

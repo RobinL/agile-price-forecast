@@ -140,11 +140,18 @@ export function chartSpec(
         scale: { domain: [0, 1440], nice: false },
         axis: {
           title: null,
-          values: [0, 360, 720, 1080, 1440],
+          // Keep at least 28px per label. Vega updates these ticks whenever the
+          // plot resizes, from hourly on desktop to wider intervals on phones.
+          values: {
+            expr: "sequence(0, 1441, width >= 672 ? 60 : width >= 336 ? 120 : width >= 224 ? 180 : width >= 168 ? 240 : 360)",
+          },
           labelExpr:
-            "datum.value === 1440 ? '24:00' : format(floor(datum.value / 60), '02') + ':00'",
+            "datum.value === 1440 ? '12am' : (datum.value % 720 === 0 ? '12' : format((datum.value / 60) % 12, 'd')) + (datum.value < 720 ? 'am' : 'pm')",
+          labelAngle: 0,
+          labelOverlap: false,
+          labelFlush: false,
           grid: false,
-          labelPadding: 9,
+          labelPadding: 8,
         },
       },
     },
