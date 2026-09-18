@@ -1,241 +1,39 @@
 # Agile price forecast
 
-Python collects electricity forecasts, applies a saved model and writes one small JSON file. A static Vite/Vega-Lite website draws the results as aligned daily charts. The same pipeline runs locally and in GitHub Actions, which keeps its private state in R2 and publishes the static site to GitHub Pages.
+**[View the live forecast](https://www.robinlinacre.com/agile-price-forecast/)**
 
-**Live website: [www.robinlinacre.com/agile-price-forecast](https://www.robinlinacre.com/agile-price-forecast/).** Forecast updates are scheduled hourly, at minute 37; GitHub may delay scheduled runs. An open, visible page checks for updated data every ten minutes. See [cloud setup and operating controls](CLOUD_SETUP.md) for deployment details and how to pause updates.
+An experimental website showing a week of half-hourly Agile electricity prices in aligned daily charts, with optional highlights for the cheapest periods. Published prices are shown where available; the model estimates the rest.
 
-The app now uses our **selected research ensemble**, with **seven days of half-hourly predictions**. The export includes today so far and a partial final date; the website omits that incomplete final day, normally showing seven full calendar-day charts. Prices are Region G, p/kWh including VAT; standing charges are excluded. Published prices take precedence and missing required inputs leave gaps.
+Prices are for Region G, including VAT and excluding standing charges. Forecasts can be wrong or delayed: check published prices with your supplier before relying on them.
 
-The model is experimental. Its research adjustment was tested at 48–72 hours ahead. Days 4–7 and different times of issue do not inherit those accuracy results. [Validation notes](MODEL_VALIDATION.md) explain what has actually been checked.
+## How it works
 
-## See the website
+- **Data:** free price, demand and generation feeds from Octopus Energy, NESO and Elexon.
+- **Forecasting:** Python combines several tree models and adjustments. GitHub Actions refreshes the forecast hourly and retrains the model approximately weekly.
+- **Storage:** private history and saved models live in Cloudflare R2.
+- **Website:** Vite, TypeScript and Vega-Lite, hosted as static files on GitHub Pages. Visitors never access R2 or run the model.
 
-Use Node 22.12 or newer (Node 22 is declared in `.node-version`):
+## Try it locally
+
+With Node 22.12 or newer:
 
 ```sh
 npm ci
 make dev
 ```
 
-Open <http://127.0.0.1:5173>. This uses the **fictional** example in `fixtures/site/data/forecast.json`. Frontend development needs no Python, research archive, API credentials or cloud access after installing dependencies. Edit `web/src/` and the page updates automatically.
+Open <http://127.0.0.1:5173>. This uses fictional example data, so working on the website needs no API credentials or cloud setup.
 
-All days share the same time and price scales. Half-hour bars use a continuous colour scale: blue through teal, green, amber, coral and red as prices rise. Fixed anchors from −5 to 45 p/kWh keep colours comparable across days; prices outside that range retain the endpoint colour. The gradient key uses the same anchors. All bars have solid fills. A pale grey background marks published prices, with a dark grey arrow label. Today has a London-time marker captured at page load or refresh. London clock-change days retain their 46 or 50 intervals, with repeated clock times drawn side by side.
+## Acknowledgements and licence
 
-Highlights are off by default; enabling them reveals the period count and length controls. The optional yellow highlights select **1–5 non-overlapping future periods across all displayed days**, defaulting to two three-hour periods when enabled. The length control offers periods from two to eight hours. Selection minimizes their combined average price for the chosen count; adjacent periods may touch, and changing the count can change their boundaries. Each highlighted period has darker yellow side edges and a numbered yellow circle matching the ranked list. The list shows start/end times and average p/kWh, with links to the relevant day. Periods may cross midnight or a clock change, but never bridge a missing price. Elapsed intervals and the hidden incomplete final day are excluded. All calculations happen in the browser, with no additional API calls.
+Thank you to [AgilePredict](https://agilepredict.com/) for making its [forecasting code](https://github.com/fboundy/agile_predict) available. Our model builds substantially on that work, adapting parts of the published code and adding models and adjustments. This project focuses on making forecasts easy to read at a glance, rather than claiming better forecast accuracy.
 
-## How the pieces fit
+Our original code and documentation use the [MIT licence](LICENSE). AgilePredict’s [MIT notice](notices/AgilePredict-MIT.txt) is preserved. Third-party software and data retain their own terms; see [data attribution](DATA_ATTRIBUTION.md) and the [licensing review](DATA_LICENSING.md).
 
-```text
-Free APIs → collect → dated local snapshot
-                           │
-                    update-history
-                           │
-                  monthly private tables
-                       │         │
-                 train weekly    │ observed prices + saved predictions
-                       │         │ give recent error correction
-                   saved model   │
-                       └────┬────┘
-                snapshot → forecast → public forecast.json → static website
-                               │
-                        save issued predictions
-                               │
-                        score when prices arrive
-```
+## More detail
 
-Collection, training and prediction are separate commands. Training learns from past examples and saves a model. Forecasting reuses that model. The website only reads the public JSON; opening it never downloads provider data or runs Python.
-
-Read these files in roughly this order:
-
-| File | Responsibility |
-|---|---|
-| `src/agile_forecast/cli.py` | Connect the small list of commands. |
-| `src/agile_forecast/feeds.py` | Download five free feeds and translate provider columns. |
-| `src/agile_forecast/features.py` | Build demand curves, calendar features, ratios and changes. |
-| `src/agile_forecast/ensemble.py` | Fit the fixed research recipe and combine its predictions. |
-| `src/agile_forecast/forecast.py` | Prefer published prices, validate and export the public contract. |
-| `src/agile_forecast/archive.py` | Maintain monthly input, price and prediction files; calculate recent error. |
-| `src/agile_forecast/model_store.py` | Save fitted models and check provenance before loading them. |
-| `src/agile_forecast/evaluation.py` | Research parity, historical comparison and prospective scoring. |
-| `src/agile_forecast/history.py` | One-off private research import; no research-code dependency. |
-| `src/agile_forecast/model.py` | Original, readable linear baseline, retained for comparison and demos. |
-| `src/agile_forecast/demo.py` | Generate made-up examples. |
-| `src/agile_forecast/production.py` | Run the same pipeline, refit weekly and check portability/publication. |
-| `src/agile_forecast/state_bundle.py`, `r2.py`, `cloud_cli.py` | Explicitly transport private state with atomic promotion, recovery and budgets. |
-| `.github/workflows/forecast.yml` | Manual/hourly processing and separately enabled static publishing. |
-| `schemas/forecast.schema.json` | Version 2 agreement between Python and the website. |
-| `web/src/data.ts`, `chart.ts`, `main.ts` | Read the JSON, define the Vega-Lite charts and lay out the page. |
-| `web/src/cheap-periods.ts` | Find the cheapest combination of complete, non-overlapping periods in UTC. |
-
-The current model exports point forecasts only. An uncertainty view needs calibrated prediction intervals and coverage checks by forecast horizon before it can be offered; disagreement between ensemble members is not a validated uncertainty band.
-
-## The model in plain English
-
-First, five forecasts vote by taking their median. Two reproduce the inspected AgilePredict recipe (each averages CatBoost, LightGBM and ExtraTrees), using 60 or 90 days of history. Three additional tree models use more detailed demand features, with 90 or 180 days of history.
-
-For a **complete unknown 48–72-hour window**, a sixth model trained on 365 days helps adjust the shape of that curve. We preserve the median ensemble's average price level, then add half the last three days' completed short-horizon mean error, capped at ±4 p/kWh. Recent overprediction therefore pulls the new forecast down. Fewer than three eligible reference issue days means zero correction and an explicit warming-up note.
-
-Outside that window, the app uses the median ensemble alone. It can calculate a week ahead when inputs exist, but we have not measured its accuracy on days 4–7. The full 48–72-hour adjustment is skipped if any of its 48 slots lacks a required input. Missing demand, renewables or capacity leave a gap; missing optional revision features use training medians.
-
-The recipe is fixed, not retuned each time it trains. Training uses the original research's next-day target window and one reference issue per day. Inputs must have been available at their issue, and prices and delivery intervals must be known and complete before the training cutoff. The longest model preserves the research seed's embargo exclusions. Live reference issues use the first observed collection from **16:30 up to 17:30 London time**; the actual time is retained. This tolerance is an experimental operating choice, not proof of equivalence to exactly 16:30.
-
-The first 72 hours retain the research feature calculations. Later horizons calculate daily context within subsequent 72-hour blocks, so extending the horizon cannot change the original predictions.
-
-### The five feeds
-
-| Feed | What it supplies |
-|---|---|
-| Octopus public Agile API | Published prices and outcomes for training/scoring. |
-| NESO embedded wind and solar | Forecast generation from distribution-connected renewables. This is not total UK wind. |
-| NESO cardinal demand points | A forecast daily demand curve, reconstructed at half-hourly resolution. |
-| Elexon NDFD | Forecast daily peak national demand. |
-| NESO Daily OPMR | Available generation, imports, reserves and other capacity features. |
-
-Time of day, seasons, weekends and England bank holidays are calculated locally. There is no ENTSO-E token dependency, paid feed or separate weather API. We keep the research demand-curve reconstruction; replacing it with NESO's native half-hourly series remains a separate experiment.
-
-Current NESO files do not always include a model-run timestamp. Collection records when each response was observed and uses the HTTP modification time as a documented proxy where necessary. These live timestamp definitions and new issue times need forward evaluation.
-
-## Run the local pipeline
-
-Install Python 3.12 and [uv](https://docs.astral.sh/uv/), then:
-
-```sh
-make setup
-```
-
-This installs locked Python and npm dependencies. Nothing configures or contacts R2.
-
-With the private research archive already on this computer, first setup is:
-
-```sh
-make import-research       # seed monthly history; safe to repeat with the same seed
-make collect-local        # explicit provider downloads
-make update-history-local # preserve inputs and observed price versions
-make train-local          # fit the research ensemble from local history
-make forecast-local       # reuse fitted models; no network or retraining
-make dev DATA_MODE=local
-```
-
-Import reads three compact tables from `../initial_experiments/artifacts/deployment/`: `daily_features_400d.parquet`, `labels_400d.parquet` and `daily_forecasts_365d.parquet`. It copies data, not research code. Existing linear history is preserved. A new state directory also receives a clearly labelled historical replay, with only the original 72 hours of input coverage. A GitHub clone does not include the private seed; the fictional workflow works without it.
-
-Routine refreshes are:
-
-```sh
-make collect-local
-make update-history-local
-make forecast-local
-make score-local
-```
-
-Refit explicitly with `make train-local`, approximately weekly. For history to keep advancing under the research training policy, collect at least once daily in the 16:30–17:30 London reference window. All other issue times are still archived for forward scoring. Scheduling this will be part of Actions later.
-
-Collection bounds requests and response sizes and refuses unexpected hosts. Forecast export rejects live snapshots older than two hours and models or training history older than 35 days. Failed collection or export keeps the previous complete snapshot/site file. Run one writer at a time; concurrent local commands are not coordinated.
-
-### Checks and comparisons
-
-```sh
-make verify-research-local # refit and compare with saved research outputs, offline
-make evaluate-local       # paired chronological comparison, weekly historical fits
-make forecast-local       # include the matching evaluation in the export
-make score-local          # evaluate saved live predictions after outcomes arrive
-```
-
-`evaluate-local` writes `accuracy.json` and private per-slot diagnostics. It uses previously explored historical data, excludes published-at-issue targets, and compares exactly the same slots. It does not compare against AgilePredict's live service or establish seven-day accuracy. Scores attach only to the matching recipe fingerprint. They remain in the JSON for analysis; the webpage does not show an accuracy panel.
-
-`score-local` never regenerates old forecasts: it uses saved live issues, distinguishes fitted model versions and reports error by day ahead. Imported research reference predictions are excluded. Overlapping hourly forecasts are not statistically independent. Initially there may be no matured unknown prices to score.
-
-The retained linear baseline can be selected explicitly:
-
-```sh
-uv run agile-forecast train --model linear
-uv run agile-forecast evaluate --model linear
-# Restore the default research model afterwards:
-make train-local
-```
-
-### Fictional end-to-end development
-
-```sh
-make demo-local
-make dev DATA_MODE=demo-local
-```
-
-Creation refuses to overwrite existing demo history. On subsequent runs:
-
-```sh
-uv run agile-forecast --state-dir runtime_state/demo train
-uv run agile-forecast --state-dir runtime_state/demo forecast
-```
-
-Demo output stays inside `runtime_state/demo/site/`; it cannot silently replace the real local site's export. The demo still uses the small linear model and makes no accuracy claim. `make dev` always uses the tracked fictional fixture, independently of either state directory.
-
-To preview the complete real static build:
-
-```sh
-make preview-local DATA_MODE=local
-```
-
-`dist/` contains frontend assets, the selected public JSON and generated third-party software notices. `make build` defaults to the fictional fixture. The software-licence download is generated during the build; use `npm run preview` to check it locally. The forecast uses static requests and relative paths compatible with a GitHub Pages project site.
-
-## Where the files live
-
-```text
-fixtures/site/data/forecast.json     Tracked fictional example
-runtime_state/local/                Ignored private state
-  history.json                      Provenance and real/demo mode
-  history.csv                       Preserved original linear seed, not the live archive
-  history/
-    research_import.json            Seed hashes and provenance
-    processed_snapshots.json        Idempotent collection progress
-    features/YYYY-MM.parquet        Observed forecast inputs, keyed by issue + target
-    prices/YYYY-MM.parquet          Actual prices, versioned by observation time
-    predictions/YYYY-MM.parquet     Original model outputs and comparator predictions
-  snapshots/<time>-<mode>/          inputs.csv, features.csv, prices.csv, metadata.json
-  latest_snapshot.json              Pointer to the last complete snapshot
-  models/<hash>.joblib + .json       Fitted research bundle and metadata
-  model.json                        Current model pointer
-  previous_model.json               Previous model pointer for manual recovery
-  linear_model.json                 Preserved prototype when upgrading
-  accuracy.json                     Matching historical comparison
-  checks/                           Parity, per-slot comparison, forward scores
-  forecasts/                        Exact issued public forecasts, preserved privately
-runtime_state/site/data/forecast.json    Real local website export only
-runtime_state/demo/                 Separate fictional state and website export
-```
-
-Monthly files use compressed Parquet. New snapshots add inputs, while later observed prices supply their training answers. Price corrections carry their own observation time; rerunning an update does not duplicate rows. Training selects at most 400 days of input issues and uses only outcomes known by its cutoff. There is no database server.
-
-Model metadata records member training dates/counts, a training-data hash, feature/recipe fingerprint, library versions and artifact checksum. Model binaries are **trusted executable serialization**: use only our own local files or their trusted private backup. Checksum checks detect accidental changes; they do not make a malicious model safe. A changed recipe or library environment requires a refit. Local fitting preserves a previous pointer; cloud bundles retain current/previous binaries and all model metadata. Rollback is deliberately a manual recovery step.
-
-Keep `runtime_state/` private and backed up. Git ignores it, model binaries, credentials, environments, build output and caches. The Vite server only serves frontend files, dependencies and the chosen public output directory. It cannot serve private state.
-
-## Cloud setup
-
-The [step-by-step guide](CLOUD_SETUP.md) explains the bucket, credentials, initial seed, manual trial and publishing. Private R2 storage, saved-model reuse and Pages deployment have been verified. Hourly processing and Pages deployment are enabled and can be paused separately using their repository variables. Nothing in the workflows changes repository visibility.
-
-Initially the runner downloads one compressed state bundle, including the monthly history files, and uploads a new bundle after a successful forecast. A conditional pointer is promoted last. The current and previous bundles are retained, with request, processing and storage budgets. Only the checked static website goes to Pages; popularity cannot start R2 requests or model execution. The bundle format has explicit size limits; incremental monthly-object transport is a later improvement if history outgrows them.
-
-`make prepare-cloud-seed` creates an ignored private seed **offline**, without touching R2. The first cloud run refits and compares against its saved local predictions. The Linux and R2 checks have passed; [the guide](CLOUD_SETUP.md) records the live evidence and current Pages status. Local tests alone do not establish cloud deployment success.
-
-For another model, add a separate recipe and compare it prospectively rather than changing historical results. For another feed, add its normalizer and archive actual forecast vintages before relying on a backtest. The website need not change unless the public contract changes.
-
-[Proposed architecture](proposed_architecture.md), [research archive](RESEARCH.md), [source-use review](DATA_LICENSING.md) and [attribution](DATA_ATTRIBUTION.md) give the wider context. No real input datasets are checked in. AgilePredict's reproduced code carries its [upstream MIT notice](notices/AgilePredict-MIT.txt).
-
-## Licence and acknowledgements
-
-Thank you to [AgilePredict](https://agilepredict.com/) for publishing its [modelling code](https://github.com/fboundy/agile_predict). Our model builds substantially on that work, adapting parts of it and adding models and adjustments. We preserve its copyright and full MIT notice in [notices/AgilePredict-MIT.txt](notices/AgilePredict-MIT.txt), including in built Python packages.
-
-This project's original code and documentation are available under the [MIT licence](LICENSE). Existing third-party notices and licences still apply. This licence does **not** grant rights over provider datasets, tariff prices or AgilePredict service data; see [data attribution](DATA_ATTRIBUTION.md) and [the source-use review](DATA_LICENSING.md).
-
-Every website build uses Vite's licence generator to collect the bundled dependencies' notices into `dist/third-party-licences.txt`, linked from the footer. The deployment check requires that file and still rejects arbitrary extra files. Dependencies and their licences are taken from the installed locked versions, so updating a dependency also updates its published notice.
-
-## Tests
-
-```sh
-uv run ruff check src tests
-PLAYWRIGHT_BROWSERS_PATH=.cache/ms-playwright npx playwright install chromium
-make test
-make build
-```
-
-Tests cover historical availability, recent-error maturity, complete-window adjustment, missing inputs, price revisions, model checksums, demo isolation, seven-day/DST intervals, public export validation, desktop/mobile charts and the private-file boundary. Cloud tests exercise conditional promotion, failure recovery, leases, budgets, archive integrity and the public artifact allowlist without credentials. `make format` applies the formatters. The offline research parity command requires the private archive and runs separately from synthetic CI tests.
+- [Architecture](proposed_architecture.md)
+- [Cloud setup and operating instructions](CLOUD_SETUP.md)
+- [Model validation and limitations](MODEL_VALIDATION.md)
+- [Research background](RESEARCH.md)
+- [Local development commands](Makefile)
