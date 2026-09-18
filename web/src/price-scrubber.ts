@@ -47,7 +47,10 @@ export function attachPriceScrubber(
     const slot = byStart.get(band.start)!;
     const price =
       slot.price === null ? "Unavailable" : `${slot.price.toFixed(1)}p/kWh`;
-    label.textContent = price;
+    const hour = Math.floor(slot.minute / 60);
+    const minutes = slot.minute % 60;
+    const time = `${hour % 12 || 12}${minutes ? `:${String(minutes).padStart(2, "0")}` : ""}${hour < 12 ? "am" : "pm"}`;
+    label.textContent = `${time}: ${price}`;
     line.hidden = label.hidden = false;
     const x =
       ((band.band_start + band.band_end) / 2 / 1440) * slider.clientWidth;

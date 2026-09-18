@@ -28,7 +28,7 @@ test("touch reveals a price per chart, dragging updates it and edge labels stay 
   )[12];
   await expect(slider).toHaveAttribute("data-start", slot.start);
   await expect(slider.locator(".scrubber-price")).toHaveText(
-    `${slot.price.toFixed(1)}p/kWh`,
+    `6am: ${slot.price.toFixed(1)}p/kWh`,
   );
   await expect(sliders.nth(1).locator(".scrubber-price")).toBeHidden();
   const cdp = await page.context().newCDPSession(page);
@@ -103,9 +103,13 @@ test("missing and negative prices are honest and keyboard controls work", async 
   await expect(page.locator(".price-scrubber")).toHaveCount(7);
   await slider.focus();
   await page.keyboard.press("Home");
-  await expect(slider.locator(".scrubber-price")).toHaveText("Unavailable");
+  await expect(slider.locator(".scrubber-price")).toHaveText(
+    "12am: Unavailable",
+  );
   await page.keyboard.press("ArrowRight");
-  await expect(slider.locator(".scrubber-price")).toHaveText("-5.6p/kWh");
+  await expect(slider.locator(".scrubber-price")).toHaveText(
+    "12:30am: -5.6p/kWh",
+  );
   await page.keyboard.press("Escape");
   await expect(slider.locator(".scrubber-price")).toBeHidden();
 });
