@@ -1,0 +1,238 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Public Agile forecast v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "mode",
+    "issued_at",
+    "generated_at",
+    "timezone",
+    "region",
+    "unit",
+    "model",
+    "sources",
+    "notes",
+    "accuracy",
+    "slots"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "mode": {
+      "enum": ["demo", "replay", "live"]
+    },
+    "issued_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "timezone": {
+      "const": "Europe/London"
+    },
+    "region": {
+      "const": "G"
+    },
+    "unit": {
+      "const": "p/kWh including VAT"
+    },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "id", "trained_as_of", "training_rows"],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "trained_as_of": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "training_rows": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "retrieved_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "provider_updated_at": {
+            "type": ["string", "null"]
+          },
+          "sha256": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "notes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "accuracy": {
+      "type": ["object", "null"],
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "baseline": {
+          "type": "string"
+        },
+        "data_mode": {
+          "type": "string"
+        },
+        "training_input_note": {
+          "type": "string"
+        },
+        "evaluated_as_of": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "model_trained_as_of": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "target_start": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "target_end": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "slots": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "issue_days": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "model_mae_p_kwh": {
+          "type": "number",
+          "minimum": 0
+        },
+        "week_earlier_mae_p_kwh": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "description",
+        "baseline",
+        "data_mode",
+        "training_input_note",
+        "evaluated_as_of",
+        "model_trained_as_of",
+        "target_start",
+        "target_end",
+        "slots",
+        "issue_days",
+        "model_mae_p_kwh",
+        "week_earlier_mae_p_kwh"
+      ],
+      "additionalProperties": false
+    },
+    "slots": {
+      "type": "array",
+      "minItems": 138,
+      "maxItems": 150,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "start",
+          "end",
+          "day",
+          "minute",
+          "clock",
+          "utc_offset_minutes",
+          "price",
+          "status"
+        ],
+        "properties": {
+          "start": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "end": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "day": {
+            "type": "string",
+            "format": "date"
+          },
+          "minute": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1439
+          },
+          "clock": {
+            "type": "string"
+          },
+          "utc_offset_minutes": {
+            "enum": [0, 60]
+          },
+          "price": {
+            "type": ["number", "null"]
+          },
+          "status": {
+            "enum": ["published", "predicted", "unavailable"]
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "status": {
+                  "const": "unavailable"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "price": {
+                  "type": "null"
+                }
+              }
+            },
+            "else": {
+              "properties": {
+                "price": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

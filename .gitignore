@@ -43,3 +43,6 @@ coverage/
 # Local tools and operating-system files
 .DS_Store
 *.log
+.cache/
+test-results/
+playwright-report/

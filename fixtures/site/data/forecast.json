@@ -1,0 +1,1472 @@
+{
+  "schema_version": 1,
+  "mode": "demo",
+  "issued_at": "2026-09-18T09:00:00+00:00",
+  "generated_at": "2026-09-18T09:29:30.825751+00:00",
+  "timezone": "Europe/London",
+  "region": "G",
+  "unit": "p/kWh including VAT",
+  "model": {
+    "name": "Simple linear model",
+    "id": "0b70b4dea378",
+    "trained_as_of": "2026-09-18T09:00:00+00:00",
+    "training_rows": 5778
+  },
+  "sources": [
+    {
+      "name": "Example Octopus prices"
+    },
+    {
+      "name": "Example demand forecast"
+    },
+    {
+      "name": "Example wind and solar forecast"
+    }
+  ],
+  "notes": [
+    "Made-up demonstration data for 18\u201320 September 2026. These are not actual prices or measured forecasting accuracy."
+  ],
+  "accuracy": null,
+  "slots": [
+    {
+      "start": "2026-09-17T23:00:00+00:00",
+      "end": "2026-09-17T23:30:00+00:00",
+      "day": "2026-09-18",
+      "minute": 0,
+      "clock": "00:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 13.443,
+      "status": "published"
+    },
+    {
+      "start": "2026-09-17T23:30:00+00:00",
+      "end": "2026-09-18T00:00:00+00:00",
+      "day": "2026-09-18",
+      "minute": 30,
+      "clock": "00:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 13.926,
+      "status": "published"
+    },
+    {
+      "start": "2026-09-18T00:00:00+00:00",
+      "end": "2026-09-18T00:30:00+00:00",
+      "day": "2026-09-18",
+      "minute": 60,
+      "clock": "01:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 12.454,
+      "status": "published"
+    },
+    {
+      "start": "2026-09-18T00:30:00+00:00",
+      "end": "2026-09-18T01:00:00+00:00",
+      "day": "2026-09-18",
+      "minute": 90,
+      "clock": "01:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 14.073,
+      "status": "published"
+    },
+    {
+      "start": "2026-09-18T01:00:00+00:00",
+      "end": "2026-09-18T01:30:00+00:00",
+      "day": "2026-09-18",
+      "minute": 120,
+      "clock": "02:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 13.95,
+      "status": "published"
+    },
+    {
+      "start": "2026-09-18T01:30:00+00:00",
+      "end": "2026-09-18T02:00:00+00:00",
+      "day": "2026-09-18",
+      "minute": 150,
+      "clock": "02:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 12.653,
+      "status": "published"
+    },
+    {
+      "start": "2026-09-18T02:00:00+00:00",
+      "end": "2026-09-18T02:30:00+00:00",
+      "day": "2026-09-18",
+      "minute": 180,
+      "clock": "03:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 13.593,
+      "status": "published"
+    },
+    {
+      "start": "2026-09-18T02:30:00+00:00",
+      "end": "2026-09-18T03:00:00+00:00",
+      "day": "2026-09-18",
+      "minute": 210,
+      "clock": "03:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 13.552,
+      "status": "published"
+    },
+    {
+      "start": "2026-09-18T03:00:00+00:00",
+      "end": "2026-09-18T03:30:00+00:00",
+      "day": "2026-09-18",
+      "minute": 240,
+      "clock": "04:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 12.944,
+      "status": "published"
+    },
+    {
+      "start": "2026-09-18T03:30:00+00:00",
+      "end": "2026-09-18T04:00:00+00:00",
+      "day": "2026-09-18",
+      "minute": 270,
+      "clock": "04:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 15.605,
+      "status": "published"
+    },
+    {
+      "start": "2026-09-18T04:00:00+00:00",
+      "end": "2026-09-18T04:30:00+00:00",
+      "day": "2026-09-18",
+      "minute": 300,
+      "clock": "05:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 15.16,
+      "status": "published"
+    },
+    {
+      "start": "2026-09-18T04:30:00+00:00",
+      "end": "2026-09-18T05:00:00+00:00",
+      "day": "2026-09-18",
+      "minute": 330,
+      "clock": "05:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 13.841,
+      "status": "published"
+    },
+    {
+      "start": "2026-09-18T05:00:00+00:00",
+      "end": "2026-09-18T05:30:00+00:00",
+      "day": "2026-09-18",
+      "minute": 360,
+      "clock": "06:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 16.4,
+      "status": "published"
+    },
+    {
+      "start": "2026-09-18T05:30:00+00:00",
+      "end": "2026-09-18T06:00:00+00:00",
+      "day": "2026-09-18",
+      "minute": 390,
+      "clock": "06:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 14.111,
+      "status": "published"
+    },
+    {
+      "start": "2026-09-18T06:00:00+00:00",
+      "end": "2026-09-18T06:30:00+00:00",
+      "day": "2026-09-18",
+      "minute": 420,
+      "clock": "07:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 15.408,
+      "status": "published"
+    },
+    {
+      "start": "2026-09-18T06:30:00+00:00",
+      "end": "2026-09-18T07:00:00+00:00",
+      "day": "2026-09-18",
+      "minute": 450,
+      "clock": "07:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 13.531,
+      "status": "published"
+    },
+    {
+      "start": "2026-09-18T07:00:00+00:00",
+      "end": "2026-09-18T07:30:00+00:00",
+      "day": "2026-09-18",
+      "minute": 480,
+      "clock": "08:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 15.244,
+      "status": "published"
+    },
+    {
+      "start": "2026-09-18T07:30:00+00:00",
+      "end": "2026-09-18T08:00:00+00:00",
+      "day": "2026-09-18",
+      "minute": 510,
+      "clock": "08:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 15.015,
+      "status": "published"
+    },
+    {
+      "start": "2026-09-18T08:00:00+00:00",
+      "end": "2026-09-18T08:30:00+00:00",
+      "day": "2026-09-18",
+      "minute": 540,
+      "clock": "09:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 16.082,
+      "status": "published"
+    },
+    {
+      "start": "2026-09-18T08:30:00+00:00",
+      "end": "2026-09-18T09:00:00+00:00",
+      "day": "2026-09-18",
+      "minute": 570,
+      "clock": "09:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 13.877,
+      "status": "published"
+    },
+    {
+      "start": "2026-09-18T09:00:00+00:00",
+      "end": "2026-09-18T09:30:00+00:00",
+      "day": "2026-09-18",
+      "minute": 600,
+      "clock": "10:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 15.454,
+      "status": "published"
+    },
+    {
+      "start": "2026-09-18T09:30:00+00:00",
+      "end": "2026-09-18T10:00:00+00:00",
+      "day": "2026-09-18",
+      "minute": 630,
+      "clock": "10:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 15.04,
+      "status": "published"
+    },
+    {
+      "start": "2026-09-18T10:00:00+00:00",
+      "end": "2026-09-18T10:30:00+00:00",
+      "day": "2026-09-18",
+      "minute": 660,
+      "clock": "11:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 13.953,
+      "status": "published"
+    },
+    {
+      "start": "2026-09-18T10:30:00+00:00",
+      "end": "2026-09-18T11:00:00+00:00",
+      "day": "2026-09-18",
+      "minute": 690,
+      "clock": "11:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 16.518,
+      "status": "published"
+    },
+    {
+      "start": "2026-09-18T11:00:00+00:00",
+      "end": "2026-09-18T11:30:00+00:00",
+      "day": "2026-09-18",
+      "minute": 720,
+      "clock": "12:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 16.778,
+      "status": "published"
+    },
+    {
+      "start": "2026-09-18T11:30:00+00:00",
+      "end": "2026-09-18T12:00:00+00:00",
+      "day": "2026-09-18",
+      "minute": 750,
+      "clock": "12:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 14.158,
+      "status": "published"
+    },
+    {
+      "start": "2026-09-18T12:00:00+00:00",
+      "end": "2026-09-18T12:30:00+00:00",
+      "day": "2026-09-18",
+      "minute": 780,
+      "clock": "13:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 13.64,
+      "status": "published"
+    },
+    {
+      "start": "2026-09-18T12:30:00+00:00",
+      "end": "2026-09-18T13:00:00+00:00",
+      "day": "2026-09-18",
+      "minute": 810,
+      "clock": "13:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 15.334,
+      "status": "published"
+    },
+    {
+      "start": "2026-09-18T13:00:00+00:00",
+      "end": "2026-09-18T13:30:00+00:00",
+      "day": "2026-09-18",
+      "minute": 840,
+      "clock": "14:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 15.502,
+      "status": "published"
+    },
+    {
+      "start": "2026-09-18T13:30:00+00:00",
+      "end": "2026-09-18T14:00:00+00:00",
+      "day": "2026-09-18",
+      "minute": 870,
+      "clock": "14:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 14.738,
+      "status": "published"
+    },
+    {
+      "start": "2026-09-18T14:00:00+00:00",
+      "end": "2026-09-18T14:30:00+00:00",
+      "day": "2026-09-18",
+      "minute": 900,
+      "clock": "15:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 13.091,
+      "status": "published"
+    },
+    {
+      "start": "2026-09-18T14:30:00+00:00",
+      "end": "2026-09-18T15:00:00+00:00",
+      "day": "2026-09-18",
+      "minute": 930,
+      "clock": "15:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 16.214,
+      "status": "published"
+    },
+    {
+      "start": "2026-09-18T15:00:00+00:00",
+      "end": "2026-09-18T15:30:00+00:00",
+      "day": "2026-09-18",
+      "minute": 960,
+      "clock": "16:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 27.081,
+      "status": "published"
+    },
+    {
+      "start": "2026-09-18T15:30:00+00:00",
+      "end": "2026-09-18T16:00:00+00:00",
+      "day": "2026-09-18",
+      "minute": 990,
+      "clock": "16:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 28.548,
+      "status": "published"
+    },
+    {
+      "start": "2026-09-18T16:00:00+00:00",
+      "end": "2026-09-18T16:30:00+00:00",
+      "day": "2026-09-18",
+      "minute": 1020,
+      "clock": "17:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 28.304,
+      "status": "published"
+    },
+    {
+      "start": "2026-09-18T16:30:00+00:00",
+      "end": "2026-09-18T17:00:00+00:00",
+      "day": "2026-09-18",
+      "minute": 1050,
+      "clock": "17:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 28.134,
+      "status": "published"
+    },
+    {
+      "start": "2026-09-18T17:00:00+00:00",
+      "end": "2026-09-18T17:30:00+00:00",
+      "day": "2026-09-18",
+      "minute": 1080,
+      "clock": "18:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 29.072,
+      "status": "published"
+    },
+    {
+      "start": "2026-09-18T17:30:00+00:00",
+      "end": "2026-09-18T18:00:00+00:00",
+      "day": "2026-09-18",
+      "minute": 1110,
+      "clock": "18:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 28.115,
+      "status": "published"
+    },
+    {
+      "start": "2026-09-18T18:00:00+00:00",
+      "end": "2026-09-18T18:30:00+00:00",
+      "day": "2026-09-18",
+      "minute": 1140,
+      "clock": "19:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 18.663,
+      "status": "published"
+    },
+    {
+      "start": "2026-09-18T18:30:00+00:00",
+      "end": "2026-09-18T19:00:00+00:00",
+      "day": "2026-09-18",
+      "minute": 1170,
+      "clock": "19:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 16.901,
+      "status": "published"
+    },
+    {
+      "start": "2026-09-18T19:00:00+00:00",
+      "end": "2026-09-18T19:30:00+00:00",
+      "day": "2026-09-18",
+      "minute": 1200,
+      "clock": "20:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 15.356,
+      "status": "published"
+    },
+    {
+      "start": "2026-09-18T19:30:00+00:00",
+      "end": "2026-09-18T20:00:00+00:00",
+      "day": "2026-09-18",
+      "minute": 1230,
+      "clock": "20:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 13.861,
+      "status": "published"
+    },
+    {
+      "start": "2026-09-18T20:00:00+00:00",
+      "end": "2026-09-18T20:30:00+00:00",
+      "day": "2026-09-18",
+      "minute": 1260,
+      "clock": "21:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 16.47,
+      "status": "published"
+    },
+    {
+      "start": "2026-09-18T20:30:00+00:00",
+      "end": "2026-09-18T21:00:00+00:00",
+      "day": "2026-09-18",
+      "minute": 1290,
+      "clock": "21:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 14.111,
+      "status": "published"
+    },
+    {
+      "start": "2026-09-18T21:00:00+00:00",
+      "end": "2026-09-18T21:30:00+00:00",
+      "day": "2026-09-18",
+      "minute": 1320,
+      "clock": "22:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 13.902,
+      "status": "published"
+    },
+    {
+      "start": "2026-09-18T21:30:00+00:00",
+      "end": "2026-09-18T22:00:00+00:00",
+      "day": "2026-09-18",
+      "minute": 1350,
+      "clock": "22:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 14.102,
+      "status": "published"
+    },
+    {
+      "start": "2026-09-18T22:00:00+00:00",
+      "end": "2026-09-18T22:30:00+00:00",
+      "day": "2026-09-18",
+      "minute": 1380,
+      "clock": "23:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 11.206,
+      "status": "published"
+    },
+    {
+      "start": "2026-09-18T22:30:00+00:00",
+      "end": "2026-09-18T23:00:00+00:00",
+      "day": "2026-09-18",
+      "minute": 1410,
+      "clock": "23:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 14.424,
+      "status": "published"
+    },
+    {
+      "start": "2026-09-18T23:00:00+00:00",
+      "end": "2026-09-18T23:30:00+00:00",
+      "day": "2026-09-19",
+      "minute": 0,
+      "clock": "00:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 13.79,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-18T23:30:00+00:00",
+      "end": "2026-09-19T00:00:00+00:00",
+      "day": "2026-09-19",
+      "minute": 30,
+      "clock": "00:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 13.736,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-19T00:00:00+00:00",
+      "end": "2026-09-19T00:30:00+00:00",
+      "day": "2026-09-19",
+      "minute": 60,
+      "clock": "01:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 13.728,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-19T00:30:00+00:00",
+      "end": "2026-09-19T01:00:00+00:00",
+      "day": "2026-09-19",
+      "minute": 90,
+      "clock": "01:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 13.766,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-19T01:00:00+00:00",
+      "end": "2026-09-19T01:30:00+00:00",
+      "day": "2026-09-19",
+      "minute": 120,
+      "clock": "02:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 13.849,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-19T01:30:00+00:00",
+      "end": "2026-09-19T02:00:00+00:00",
+      "day": "2026-09-19",
+      "minute": 150,
+      "clock": "02:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 13.975,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-19T02:00:00+00:00",
+      "end": "2026-09-19T02:30:00+00:00",
+      "day": "2026-09-19",
+      "minute": 180,
+      "clock": "03:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 14.141,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-19T02:30:00+00:00",
+      "end": "2026-09-19T03:00:00+00:00",
+      "day": "2026-09-19",
+      "minute": 210,
+      "clock": "03:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 14.345,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-19T03:00:00+00:00",
+      "end": "2026-09-19T03:30:00+00:00",
+      "day": "2026-09-19",
+      "minute": 240,
+      "clock": "04:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 14.581,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-19T03:30:00+00:00",
+      "end": "2026-09-19T04:00:00+00:00",
+      "day": "2026-09-19",
+      "minute": 270,
+      "clock": "04:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 14.847,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-19T04:00:00+00:00",
+      "end": "2026-09-19T04:30:00+00:00",
+      "day": "2026-09-19",
+      "minute": 300,
+      "clock": "05:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 15.136,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-19T04:30:00+00:00",
+      "end": "2026-09-19T05:00:00+00:00",
+      "day": "2026-09-19",
+      "minute": 330,
+      "clock": "05:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 15.445,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-19T05:00:00+00:00",
+      "end": "2026-09-19T05:30:00+00:00",
+      "day": "2026-09-19",
+      "minute": 360,
+      "clock": "06:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 15.768,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-19T05:30:00+00:00",
+      "end": "2026-09-19T06:00:00+00:00",
+      "day": "2026-09-19",
+      "minute": 390,
+      "clock": "06:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 15.56,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-19T06:00:00+00:00",
+      "end": "2026-09-19T06:30:00+00:00",
+      "day": "2026-09-19",
+      "minute": 420,
+      "clock": "07:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 15.363,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-19T06:30:00+00:00",
+      "end": "2026-09-19T07:00:00+00:00",
+      "day": "2026-09-19",
+      "minute": 450,
+      "clock": "07:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 15.181,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-19T07:00:00+00:00",
+      "end": "2026-09-19T07:30:00+00:00",
+      "day": "2026-09-19",
+      "minute": 480,
+      "clock": "08:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 15.019,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-19T07:30:00+00:00",
+      "end": "2026-09-19T08:00:00+00:00",
+      "day": "2026-09-19",
+      "minute": 510,
+      "clock": "08:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 14.881,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-19T08:00:00+00:00",
+      "end": "2026-09-19T08:30:00+00:00",
+      "day": "2026-09-19",
+      "minute": 540,
+      "clock": "09:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 14.768,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-19T08:30:00+00:00",
+      "end": "2026-09-19T09:00:00+00:00",
+      "day": "2026-09-19",
+      "minute": 570,
+      "clock": "09:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 14.685,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-19T09:00:00+00:00",
+      "end": "2026-09-19T09:30:00+00:00",
+      "day": "2026-09-19",
+      "minute": 600,
+      "clock": "10:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 14.634,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-19T09:30:00+00:00",
+      "end": "2026-09-19T10:00:00+00:00",
+      "day": "2026-09-19",
+      "minute": 630,
+      "clock": "10:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 14.615,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-19T10:00:00+00:00",
+      "end": "2026-09-19T10:30:00+00:00",
+      "day": "2026-09-19",
+      "minute": 660,
+      "clock": "11:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 14.63,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-19T10:30:00+00:00",
+      "end": "2026-09-19T11:00:00+00:00",
+      "day": "2026-09-19",
+      "minute": 690,
+      "clock": "11:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 14.679,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-19T11:00:00+00:00",
+      "end": "2026-09-19T11:30:00+00:00",
+      "day": "2026-09-19",
+      "minute": 720,
+      "clock": "12:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 14.762,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-19T11:30:00+00:00",
+      "end": "2026-09-19T12:00:00+00:00",
+      "day": "2026-09-19",
+      "minute": 750,
+      "clock": "12:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 14.877,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-19T12:00:00+00:00",
+      "end": "2026-09-19T12:30:00+00:00",
+      "day": "2026-09-19",
+      "minute": 780,
+      "clock": "13:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 15.022,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-19T12:30:00+00:00",
+      "end": "2026-09-19T13:00:00+00:00",
+      "day": "2026-09-19",
+      "minute": 810,
+      "clock": "13:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 15.195,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-19T13:00:00+00:00",
+      "end": "2026-09-19T13:30:00+00:00",
+      "day": "2026-09-19",
+      "minute": 840,
+      "clock": "14:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 15.392,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-19T13:30:00+00:00",
+      "end": "2026-09-19T14:00:00+00:00",
+      "day": "2026-09-19",
+      "minute": 870,
+      "clock": "14:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 15.61,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-19T14:00:00+00:00",
+      "end": "2026-09-19T14:30:00+00:00",
+      "day": "2026-09-19",
+      "minute": 900,
+      "clock": "15:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 15.844,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-19T14:30:00+00:00",
+      "end": "2026-09-19T15:00:00+00:00",
+      "day": "2026-09-19",
+      "minute": 930,
+      "clock": "15:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 16.09,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-19T15:00:00+00:00",
+      "end": "2026-09-19T15:30:00+00:00",
+      "day": "2026-09-19",
+      "minute": 960,
+      "clock": "16:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 27.897,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-19T15:30:00+00:00",
+      "end": "2026-09-19T16:00:00+00:00",
+      "day": "2026-09-19",
+      "minute": 990,
+      "clock": "16:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 28.153,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-19T16:00:00+00:00",
+      "end": "2026-09-19T16:30:00+00:00",
+      "day": "2026-09-19",
+      "minute": 1020,
+      "clock": "17:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 28.408,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-19T16:30:00+00:00",
+      "end": "2026-09-19T17:00:00+00:00",
+      "day": "2026-09-19",
+      "minute": 1050,
+      "clock": "17:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 28.656,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-19T17:00:00+00:00",
+      "end": "2026-09-19T17:30:00+00:00",
+      "day": "2026-09-19",
+      "minute": 1080,
+      "clock": "18:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 28.894,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-19T17:30:00+00:00",
+      "end": "2026-09-19T18:00:00+00:00",
+      "day": "2026-09-19",
+      "minute": 1110,
+      "clock": "18:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 28.562,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-19T18:00:00+00:00",
+      "end": "2026-09-19T18:30:00+00:00",
+      "day": "2026-09-19",
+      "minute": 1140,
+      "clock": "19:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 16.668,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-19T18:30:00+00:00",
+      "end": "2026-09-19T19:00:00+00:00",
+      "day": "2026-09-19",
+      "minute": 1170,
+      "clock": "19:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 16.324,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-19T19:00:00+00:00",
+      "end": "2026-09-19T19:30:00+00:00",
+      "day": "2026-09-19",
+      "minute": 1200,
+      "clock": "20:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 15.984,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-19T19:30:00+00:00",
+      "end": "2026-09-19T20:00:00+00:00",
+      "day": "2026-09-19",
+      "minute": 1230,
+      "clock": "20:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 15.653,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-19T20:00:00+00:00",
+      "end": "2026-09-19T20:30:00+00:00",
+      "day": "2026-09-19",
+      "minute": 1260,
+      "clock": "21:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 15.339,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-19T20:30:00+00:00",
+      "end": "2026-09-19T21:00:00+00:00",
+      "day": "2026-09-19",
+      "minute": 1290,
+      "clock": "21:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 15.048,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-19T21:00:00+00:00",
+      "end": "2026-09-19T21:30:00+00:00",
+      "day": "2026-09-19",
+      "minute": 1320,
+      "clock": "22:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 14.784,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-19T21:30:00+00:00",
+      "end": "2026-09-19T22:00:00+00:00",
+      "day": "2026-09-19",
+      "minute": 1350,
+      "clock": "22:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 14.553,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-19T22:00:00+00:00",
+      "end": "2026-09-19T22:30:00+00:00",
+      "day": "2026-09-19",
+      "minute": 1380,
+      "clock": "23:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 14.359,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-19T22:30:00+00:00",
+      "end": "2026-09-19T23:00:00+00:00",
+      "day": "2026-09-19",
+      "minute": 1410,
+      "clock": "23:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 14.206,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-19T23:00:00+00:00",
+      "end": "2026-09-19T23:30:00+00:00",
+      "day": "2026-09-20",
+      "minute": 0,
+      "clock": "00:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 14.084,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-19T23:30:00+00:00",
+      "end": "2026-09-20T00:00:00+00:00",
+      "day": "2026-09-20",
+      "minute": 30,
+      "clock": "00:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 14.031,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-20T00:00:00+00:00",
+      "end": "2026-09-20T00:30:00+00:00",
+      "day": "2026-09-20",
+      "minute": 60,
+      "clock": "01:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 14.024,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-20T00:30:00+00:00",
+      "end": "2026-09-20T01:00:00+00:00",
+      "day": "2026-09-20",
+      "minute": 90,
+      "clock": "01:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 14.063,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-20T01:00:00+00:00",
+      "end": "2026-09-20T01:30:00+00:00",
+      "day": "2026-09-20",
+      "minute": 120,
+      "clock": "02:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 14.146,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-20T01:30:00+00:00",
+      "end": "2026-09-20T02:00:00+00:00",
+      "day": "2026-09-20",
+      "minute": 150,
+      "clock": "02:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 14.273,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-20T02:00:00+00:00",
+      "end": "2026-09-20T02:30:00+00:00",
+      "day": "2026-09-20",
+      "minute": 180,
+      "clock": "03:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 14.44,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-20T02:30:00+00:00",
+      "end": "2026-09-20T03:00:00+00:00",
+      "day": "2026-09-20",
+      "minute": 210,
+      "clock": "03:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 14.645,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-20T03:00:00+00:00",
+      "end": "2026-09-20T03:30:00+00:00",
+      "day": "2026-09-20",
+      "minute": 240,
+      "clock": "04:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 14.882,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-20T03:30:00+00:00",
+      "end": "2026-09-20T04:00:00+00:00",
+      "day": "2026-09-20",
+      "minute": 270,
+      "clock": "04:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 15.148,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-20T04:00:00+00:00",
+      "end": "2026-09-20T04:30:00+00:00",
+      "day": "2026-09-20",
+      "minute": 300,
+      "clock": "05:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 15.439,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-20T04:30:00+00:00",
+      "end": "2026-09-20T05:00:00+00:00",
+      "day": "2026-09-20",
+      "minute": 330,
+      "clock": "05:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 15.748,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-20T05:00:00+00:00",
+      "end": "2026-09-20T05:30:00+00:00",
+      "day": "2026-09-20",
+      "minute": 360,
+      "clock": "06:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 16.072,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-20T05:30:00+00:00",
+      "end": "2026-09-20T06:00:00+00:00",
+      "day": "2026-09-20",
+      "minute": 390,
+      "clock": "06:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 15.836,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-20T06:00:00+00:00",
+      "end": "2026-09-20T06:30:00+00:00",
+      "day": "2026-09-20",
+      "minute": 420,
+      "clock": "07:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 15.613,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-20T06:30:00+00:00",
+      "end": "2026-09-20T07:00:00+00:00",
+      "day": "2026-09-20",
+      "minute": 450,
+      "clock": "07:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 15.407,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-20T07:00:00+00:00",
+      "end": "2026-09-20T07:30:00+00:00",
+      "day": "2026-09-20",
+      "minute": 480,
+      "clock": "08:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 15.221,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-20T07:30:00+00:00",
+      "end": "2026-09-20T08:00:00+00:00",
+      "day": "2026-09-20",
+      "minute": 510,
+      "clock": "08:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 15.061,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-20T08:00:00+00:00",
+      "end": "2026-09-20T08:30:00+00:00",
+      "day": "2026-09-20",
+      "minute": 540,
+      "clock": "09:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 14.929,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-20T08:30:00+00:00",
+      "end": "2026-09-20T09:00:00+00:00",
+      "day": "2026-09-20",
+      "minute": 570,
+      "clock": "09:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 14.829,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-20T09:00:00+00:00",
+      "end": "2026-09-20T09:30:00+00:00",
+      "day": "2026-09-20",
+      "minute": 600,
+      "clock": "10:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 14.764,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-20T09:30:00+00:00",
+      "end": "2026-09-20T10:00:00+00:00",
+      "day": "2026-09-20",
+      "minute": 630,
+      "clock": "10:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 14.734,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-20T10:00:00+00:00",
+      "end": "2026-09-20T10:30:00+00:00",
+      "day": "2026-09-20",
+      "minute": 660,
+      "clock": "11:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 14.742,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-20T10:30:00+00:00",
+      "end": "2026-09-20T11:00:00+00:00",
+      "day": "2026-09-20",
+      "minute": 690,
+      "clock": "11:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 14.787,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-20T11:00:00+00:00",
+      "end": "2026-09-20T11:30:00+00:00",
+      "day": "2026-09-20",
+      "minute": 720,
+      "clock": "12:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 14.87,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-20T11:30:00+00:00",
+      "end": "2026-09-20T12:00:00+00:00",
+      "day": "2026-09-20",
+      "minute": 750,
+      "clock": "12:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 14.988,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-20T12:00:00+00:00",
+      "end": "2026-09-20T12:30:00+00:00",
+      "day": "2026-09-20",
+      "minute": 780,
+      "clock": "13:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 15.139,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-20T12:30:00+00:00",
+      "end": "2026-09-20T13:00:00+00:00",
+      "day": "2026-09-20",
+      "minute": 810,
+      "clock": "13:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 15.322,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-20T13:00:00+00:00",
+      "end": "2026-09-20T13:30:00+00:00",
+      "day": "2026-09-20",
+      "minute": 840,
+      "clock": "14:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 15.532,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-20T13:30:00+00:00",
+      "end": "2026-09-20T14:00:00+00:00",
+      "day": "2026-09-20",
+      "minute": 870,
+      "clock": "14:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 15.765,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-20T14:00:00+00:00",
+      "end": "2026-09-20T14:30:00+00:00",
+      "day": "2026-09-20",
+      "minute": 900,
+      "clock": "15:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 16.017,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-20T14:30:00+00:00",
+      "end": "2026-09-20T15:00:00+00:00",
+      "day": "2026-09-20",
+      "minute": 930,
+      "clock": "15:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 16.283,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-20T15:00:00+00:00",
+      "end": "2026-09-20T15:30:00+00:00",
+      "day": "2026-09-20",
+      "minute": 960,
+      "clock": "16:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 28.113,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-20T15:30:00+00:00",
+      "end": "2026-09-20T16:00:00+00:00",
+      "day": "2026-09-20",
+      "minute": 990,
+      "clock": "16:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 28.393,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-20T16:00:00+00:00",
+      "end": "2026-09-20T16:30:00+00:00",
+      "day": "2026-09-20",
+      "minute": 1020,
+      "clock": "17:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 28.672,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-20T16:30:00+00:00",
+      "end": "2026-09-20T17:00:00+00:00",
+      "day": "2026-09-20",
+      "minute": 1050,
+      "clock": "17:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 28.946,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-20T17:00:00+00:00",
+      "end": "2026-09-20T17:30:00+00:00",
+      "day": "2026-09-20",
+      "minute": 1080,
+      "clock": "18:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 29.209,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-20T17:30:00+00:00",
+      "end": "2026-09-20T18:00:00+00:00",
+      "day": "2026-09-20",
+      "minute": 1110,
+      "clock": "18:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 28.878,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-20T18:00:00+00:00",
+      "end": "2026-09-20T18:30:00+00:00",
+      "day": "2026-09-20",
+      "minute": 1140,
+      "clock": "19:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 16.984,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-20T18:30:00+00:00",
+      "end": "2026-09-20T19:00:00+00:00",
+      "day": "2026-09-20",
+      "minute": 1170,
+      "clock": "19:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 16.64,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-20T19:00:00+00:00",
+      "end": "2026-09-20T19:30:00+00:00",
+      "day": "2026-09-20",
+      "minute": 1200,
+      "clock": "20:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 16.3,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-20T19:30:00+00:00",
+      "end": "2026-09-20T20:00:00+00:00",
+      "day": "2026-09-20",
+      "minute": 1230,
+      "clock": "20:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 15.97,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-20T20:00:00+00:00",
+      "end": "2026-09-20T20:30:00+00:00",
+      "day": "2026-09-20",
+      "minute": 1260,
+      "clock": "21:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 15.656,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-20T20:30:00+00:00",
+      "end": "2026-09-20T21:00:00+00:00",
+      "day": "2026-09-20",
+      "minute": 1290,
+      "clock": "21:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 15.365,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-20T21:00:00+00:00",
+      "end": "2026-09-20T21:30:00+00:00",
+      "day": "2026-09-20",
+      "minute": 1320,
+      "clock": "22:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 15.101,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-20T21:30:00+00:00",
+      "end": "2026-09-20T22:00:00+00:00",
+      "day": "2026-09-20",
+      "minute": 1350,
+      "clock": "22:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 14.87,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-20T22:00:00+00:00",
+      "end": "2026-09-20T22:30:00+00:00",
+      "day": "2026-09-20",
+      "minute": 1380,
+      "clock": "23:00 BST",
+      "utc_offset_minutes": 60,
+      "price": 14.677,
+      "status": "predicted"
+    },
+    {
+      "start": "2026-09-20T22:30:00+00:00",
+      "end": "2026-09-20T23:00:00+00:00",
+      "day": "2026-09-20",
+      "minute": 1410,
+      "clock": "23:30 BST",
+      "utc_offset_minutes": 60,
+      "price": 14.524,
+      "status": "predicted"
+    }
+  ]
+}

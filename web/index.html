@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f5f5ef" />
+    <meta
+      name="description"
+      content="A simple, experimental Agile electricity price forecast, one day at a time."
+    />
+    <title>Agile · A day at a time</title>
+  </head>
+  <body>
+    <main>
+      <header class="masthead">
+        <a class="wordmark" href="./"
+          ><span class="mark" aria-hidden="true">↗</span> agile
+          <span class="wordmark-detail">a day at a time</span></a
+        >
+        <span class="prototype">FIRST EDITION · EXPERIMENTAL</span>
+      </header>
+      <section class="intro">
+        <p class="eyebrow">ELECTRICITY, IN PERSPECTIVE</p>
+        <h1>See the shape<br />of the next few days.</h1>
+        <p class="lede">
+          Half-hourly Agile prices, lined up so the cheaper hours are easier to
+          see.
+        </p>
+      </section>
+      <div id="notice" class="notice" role="status">Loading the forecast…</div>
+      <div class="chart-toolbar">
+        <div class="legend">
+          <span><i class="solid"></i> Published price</span
+          ><span><i class="dashed"></i> Model estimate</span>
+        </div>
+        <span class="units">p/kWh · VAT included · Region G</span>
+      </div>
+      <section id="days" aria-label="Daily electricity price charts"></section>
+      <p class="chart-note">
+        Same time axis. Same price scale. London time throughout. Standing
+        charges excluded.
+      </p>
+      <section class="explanation">
+        <div>
+          <p class="eyebrow">A SMALL MODEL, OPENLY EXPLAINED</p>
+          <h2>Three feeds. A simple estimate.</h2>
+          <p>
+            Past prices teach the model the usual daily pattern. Forecast
+            demand, wind and solar then adjust it. The relationship is linear:
+            each input adds or subtracts a little.
+          </p>
+          <p>
+            Published Octopus prices always take precedence. Estimates can be
+            wrong, especially when the market behaves unusually.
+          </p>
+        </div>
+        <div class="source-list">
+          <a href="https://docs.octopus.energy/rest/guides/endpoints/"
+            >01
+            <span
+              >Octopus Agile prices<small>The prices we learn from</small></span
+            >
+            ↗</a
+          >
+          <a
+            href="https://www.neso.energy/data-portal/2-14-days-ahead-national-demand-forecast"
+            >02
+            <span
+              >NESO demand forecast<small
+                >How much electricity we might need</small
+              ></span
+            >
+            ↗</a
+          >
+          <a
+            href="https://www.neso.energy/data-portal/embedded-wind-and-solar-forecasts"
+            >03
+            <span
+              >NESO wind &amp; solar<small
+                >Expected embedded generation</small
+              ></span
+            >
+            ↗</a
+          >
+        </div>
+      </section>
+      <details class="details">
+        <summary>Forecast notes and the first accuracy check</summary>
+        <div id="details"></div>
+      </details>
+      <footer>
+        <span>Independent experiment. Not an Octopus or NESO service.</span
+        ><span>Supported by National Energy SO Open Data.</span>
+      </footer>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,22 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "agile-forecast"
+version = "0.1.0"
+description = "A small, readable, local-first Agile price forecast"
+requires-python = ">=3.12,<3.13"
+dependencies = ["numpy>=2,<2.4", "pandas>=2.2,<3", "pyarrow>=19", "scikit-learn>=1.6,<2", "requests>=2.32,<3", "jsonschema>=4,<5"]
+
+[project.scripts]
+agile-forecast = "agile_forecast.cli:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8,<10",
+    "ruff>=0.16.8",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
