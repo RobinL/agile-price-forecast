@@ -41,7 +41,7 @@ def test_calendar_days_keep_clock_change_intervals(date, count):
     local = intervals.tz_convert("Europe/London")
     assert (local.date == local[0].date()).sum() == count
     assert intervals.is_unique
-    assert len(intervals) == count + 96
+    assert len(intervals[intervals >= pd.Timestamp(date)]) == 336
 
 
 def test_future_answers_and_late_inputs_cannot_change_fit(example):
@@ -87,7 +87,7 @@ def test_export_contains_only_public_contract_and_does_not_refit(example, tmp_pa
     assert (state / "model.json").read_bytes() == before
     text = json.dumps(result)
     assert "demand_mw" not in text and str(state) not in text
-    assert len(result["slots"]) == 144
+    assert len(result["slots"]) == 356
     assert result["accuracy"] is None
     assert result["mode"] == "demo"
 
@@ -113,7 +113,7 @@ def test_collector_rejects_unexpected_hosts_and_exhausted_budget():
     client = Downloads()
     with pytest.raises(ValueError, match="URL"):
         client.get("test", "https://example.com/file")
-    client.calls = 8
+    client.calls = 16
     with pytest.raises(ValueError, match="budget"):
         client.get("test", "https://api.neso.energy/file")
 

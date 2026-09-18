@@ -17,11 +17,11 @@
           ><span class="mark" aria-hidden="true">↗</span> agile
           <span class="wordmark-detail">a day at a time</span></a
         >
-        <span class="prototype">FIRST EDITION · EXPERIMENTAL</span>
+        <span class="prototype">SEVEN-DAY OUTLOOK · EXPERIMENTAL</span>
       </header>
       <section class="intro">
         <p class="eyebrow">ELECTRICITY, IN PERSPECTIVE</p>
-        <h1>See the shape<br />of the next few days.</h1>
+        <h1>See the shape<br />of the week ahead.</h1>
         <p class="lede">
           Half-hourly Agile prices, lined up so the cheaper hours are easier to
           see.
@@ -42,13 +42,9 @@
       </p>
       <section class="explanation">
         <div>
-          <p class="eyebrow">A SMALL MODEL, OPENLY EXPLAINED</p>
-          <h2>Three feeds. A simple estimate.</h2>
-          <p>
-            Past prices teach the model the usual daily pattern. Forecast
-            demand, wind and solar then adjust it. The relationship is linear:
-            each input adds or subtracts a little.
-          </p>
+          <p class="eyebrow">THE FORECAST, OPENLY EXPLAINED</p>
+          <h2>Public data. An experimental forecast.</h2>
+          <p id="model-summary">Loading the model description…</p>
           <p>
             Published Octopus prices always take precedence. Estimates can be
             wrong, especially when the market behaves unusually.
@@ -82,15 +78,37 @@
             >
             ↗</a
           >
+          <a href="https://www.neso.energy/data-portal/daily-opmr"
+            >04
+            <span
+              >NESO available capacity<small
+                >Generation, imports and reserve requirements</small
+              ></span
+            >
+            ↗</a
+          >
+          <a href="https://developer.data.elexon.co.uk/"
+            >05
+            <span
+              >Elexon peak demand<small
+                >The daily national demand forecast</small
+              ></span
+            >
+            ↗</a
+          >
         </div>
       </section>
       <details class="details">
-        <summary>Forecast notes and the first accuracy check</summary>
+        <summary>Forecast notes and accuracy comparison</summary>
         <div id="details"></div>
       </details>
       <footer>
         <span>Independent experiment. Not an Octopus or NESO service.</span
         ><span>Supported by National Energy SO Open Data.</span>
+        <span
+          >Contains BMRS data © Elexon Limited copyright and database right
+          2024–2026.</span
+        >
       </footer>
     </main>
     <script type="module" src="/src/main.ts"></script>

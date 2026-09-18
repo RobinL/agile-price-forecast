@@ -316,3 +316,20 @@ summary:focus-visible {
     flex-direction: column;
   }
 }
+
+.accuracy-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  margin: 1rem 0;
+}
+.accuracy-table th,
+.accuracy-table td {
+  text-align: left;
+  padding: 0.6rem 0.3rem;
+  border-bottom: 1px solid #d9ded3;
+}
+.accuracy-table th:nth-child(n + 2),
+.accuracy-table td:nth-child(n + 2) {
+  text-align: right;
+}

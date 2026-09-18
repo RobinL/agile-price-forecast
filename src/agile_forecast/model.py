@@ -114,6 +114,7 @@ def evaluate(history, as_of, data_mode):
             np.mean(np.abs(baseline[valid] - test.price_p_kwh))
         ),
         "baseline": "Price 168 hours earlier",
+        "recipe_id": "linear-ridge-v1",
         "data_mode": data_mode,
         "evaluated_as_of": pd.Timestamp(as_of).isoformat(),
         "model_trained_as_of": boundary.isoformat(),

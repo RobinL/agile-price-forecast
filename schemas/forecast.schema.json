@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Public Agile forecast v1",
+  "title": "Public seven-day Agile forecast v2",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -15,11 +15,14 @@
     "sources",
     "notes",
     "accuracy",
-    "slots"
+    "slots",
+    "horizon_hours",
+    "horizon_end",
+    "calibration"
   ],
   "properties": {
     "schema_version": {
-      "const": 1
+      "const": 2
     },
     "mode": {
       "enum": ["demo", "replay", "live"]
@@ -44,7 +47,7 @@
     "model": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["name", "id", "trained_as_of", "training_rows"],
+      "required": ["name", "id", "trained_as_of", "training_rows", "recipe_id"],
       "properties": {
         "name": {
           "type": "string"
@@ -59,6 +62,9 @@
         "training_rows": {
           "type": "integer",
           "minimum": 1
+        },
+        "recipe_id": {
+          "type": "string"
         }
       }
     },
@@ -96,73 +102,184 @@
       }
     },
     "accuracy": {
-      "type": ["object", "null"],
-      "properties": {
-        "description": {
-          "type": "string"
+      "anyOf": [
+        {
+          "type": ["object", "null"],
+          "properties": {
+            "description": {
+              "type": "string"
+            },
+            "baseline": {
+              "type": "string"
+            },
+            "data_mode": {
+              "type": "string"
+            },
+            "training_input_note": {
+              "type": "string"
+            },
+            "evaluated_as_of": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "model_trained_as_of": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "target_start": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "target_end": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "slots": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "issue_days": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "model_mae_p_kwh": {
+              "type": "number",
+              "minimum": 0
+            },
+            "week_earlier_mae_p_kwh": {
+              "type": "number",
+              "minimum": 0
+            },
+            "recipe_id": {
+              "const": "linear-ridge-v1"
+            }
+          },
+          "required": [
+            "description",
+            "baseline",
+            "data_mode",
+            "training_input_note",
+            "evaluated_as_of",
+            "model_trained_as_of",
+            "target_start",
+            "target_end",
+            "slots",
+            "issue_days",
+            "model_mae_p_kwh",
+            "week_earlier_mae_p_kwh",
+            "recipe_id"
+          ],
+          "additionalProperties": false
         },
-        "baseline": {
-          "type": "string"
-        },
-        "data_mode": {
-          "type": "string"
-        },
-        "training_input_note": {
-          "type": "string"
-        },
-        "evaluated_as_of": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "model_trained_as_of": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "target_start": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "target_end": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "slots": {
-          "type": "integer",
-          "minimum": 1
-        },
-        "issue_days": {
-          "type": "integer",
-          "minimum": 1
-        },
-        "model_mae_p_kwh": {
-          "type": "number",
-          "minimum": 0
-        },
-        "week_earlier_mae_p_kwh": {
-          "type": "number",
-          "minimum": 0
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "recipe_id",
+            "recipe_fingerprint",
+            "evaluated_as_of",
+            "target_start",
+            "target_end",
+            "issue_days",
+            "comparison",
+            "by_horizon",
+            "description"
+          ],
+          "properties": {
+            "kind": {
+              "const": "research-comparison"
+            },
+            "recipe_id": {
+              "const": "level-shape-v1"
+            },
+            "recipe_fingerprint": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            },
+            "issue_days": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "comparison": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["model", "mae_p_kwh", "slots"],
+                "properties": {
+                  "model": {
+                    "type": "string"
+                  },
+                  "mae_p_kwh": {
+                    "type": ["number", "null"],
+                    "minimum": 0
+                  },
+                  "slots": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                }
+              }
+            },
+            "by_horizon": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["day_ahead", "comparison"],
+                "additionalProperties": false,
+                "properties": {
+                  "day_ahead": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 7
+                  },
+                  "comparison": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["model", "mae_p_kwh", "slots"],
+                      "properties": {
+                        "model": {
+                          "type": "string"
+                        },
+                        "mae_p_kwh": {
+                          "type": ["number", "null"],
+                          "minimum": 0
+                        },
+                        "slots": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "evaluated_as_of": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "target_start": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "target_end": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
         }
-      },
-      "required": [
-        "description",
-        "baseline",
-        "data_mode",
-        "training_input_note",
-        "evaluated_as_of",
-        "model_trained_as_of",
-        "target_start",
-        "target_end",
-        "slots",
-        "issue_days",
-        "model_mae_p_kwh",
-        "week_earlier_mae_p_kwh"
-      ],
-      "additionalProperties": false
+      ]
     },
     "slots": {
       "type": "array",
-      "minItems": 138,
-      "maxItems": 150,
+      "minItems": 336,
+      "maxItems": 386,
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -174,7 +291,8 @@
           "clock",
           "utc_offset_minutes",
           "price",
-          "status"
+          "status",
+          "policy"
         ],
         "properties": {
           "start": {
@@ -205,6 +323,15 @@
           },
           "status": {
             "enum": ["published", "predicted", "unavailable"]
+          },
+          "policy": {
+            "enum": [
+              "published",
+              "unavailable",
+              "research-48-72",
+              "ensemble-experimental",
+              "linear-baseline"
+            ]
           }
         },
         "allOf": [
@@ -232,6 +359,34 @@
             }
           }
         ]
+      }
+    },
+    "horizon_hours": {
+      "const": 168
+    },
+    "horizon_end": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "calibration": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["value", "samples", "issue_days", "warming_up"],
+      "properties": {
+        "value": {
+          "type": "number"
+        },
+        "samples": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "issue_days": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "warming_up": {
+          "type": "boolean"
+        }
       }
     }
   }

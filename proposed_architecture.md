@@ -2,7 +2,7 @@
 
 Revised 18 September 2026. This is a proposal based on the existing experiments; the hosted service and the cost controls below have not yet been built or configured.
 
-The historical results and code referenced here belong to the separate initial research archive. [RESEARCH.md](RESEARCH.md) locates that evidence. **A simpler local first version now works:** three feeds, linear regression, a JSON export and stacked Vega-Lite daily charts. [README.md](README.md) documents implemented commands and limitations. R2, Actions and Pages remain planned; the richer research model below is a possible later upgrade, not the current implementation.
+The historical results and code referenced here belong to the separate initial research archive. [RESEARCH.md](RESEARCH.md) locates that evidence. **The selected research model now runs locally:** five free feeds, monthly input/outcome/prediction history, saved tree models, a seven-day JSON export and stacked Vega-Lite charts. The simple linear recipe remains available for comparison and demos. [README.md](README.md) documents the commands; [MODEL_VALIDATION.md](MODEL_VALIDATION.md) records parity and accuracy checks. R2, Actions and Pages remain planned.
 
 **The basic idea**
 
@@ -10,9 +10,9 @@ The historical results and code referenced here belong to the separate initial r
 
 GitHub holds the instructions. GitHub Actions periodically runs the Python forecasting program. Private Cloudflare R2 storage remembers the data and fitted models between runs. The job then publishes only the files needed by the website to GitHub Pages. A million visitors therefore cause the same scheduled forecasting and R2 work as one visitor.
 
-Think of R2 as a private cupboard of files. Each Actions run takes out the few files it needs, does its calculations, puts the new results back, and shuts down. DuckDB helps organise the tables inside that temporary job. There is no database server to administer.
+Think of R2 as a private cupboard of files. Each Actions run takes out the few files it needs, does its calculations, puts the new results back, and shuts down. pandas organises the local Parquet tables; DuckDB remains an optional future tool. There is no database server to administer.
 
-The target service is a half-hourly Agile import-price forecast for the next 72 hours, updated approximately hourly. The first local version displays today and the next two London calendar days, a different window from a rolling 72 hours. It starts with Region G, matching our experiments, in p/kWh including VAT and excluding standing charges. Already published Octopus prices are distinguished from predictions.
+The target service is a half-hourly Agile import-price forecast for the next seven days, updated approximately hourly. The local implementation emits 336 future settlement intervals plus today so far, usually eight calendar dates with a partial final day. The measured research window remains 48–72 hours ahead; later days are experimental. It starts with Region G, matching our experiments, in p/kWh including VAT and excluding standing charges. Already published Octopus prices are distinguished from predictions.
 
 ```mermaid
 flowchart TD
@@ -35,8 +35,8 @@ The arrows show data flowing towards the visitor. A browser request travels back
 |---|---|---|
 | Source repository | A public GitHub repository for the simplest free setup | Holds code, configuration, tests and lockfiles. Private datasets and model binaries stay in R2. |
 | Scheduled computation | GitHub Actions, standard Linux runner | Collects updates and forecasts hourly; refits models weekly. |
-| Forecasting program | Python 3.12, installed with `uv` | Initially pandas, NumPy and scikit-learn linear regression. Add CatBoost/LightGBM only if adopting a tested richer model. Dependencies are locked. |
-| Table processing | pandas and readable CSV initially; Parquet for larger history | No database is needed now. DuckDB remains an option for larger archived tables. |
+| Forecasting program | Python 3.12, installed with `uv` | pandas, NumPy, scikit-learn, CatBoost and LightGBM. The fixed research recipe and dependencies are locked; the linear baseline remains available. |
+| Table processing | pandas, CSV snapshots and monthly compressed Parquet history | No database is needed now. DuckDB remains an option for larger archived tables. |
 | Durable storage | Cloudflare R2 Standard storage | Stores private inputs, fitted models and forecast history. Python accesses it with `boto3`, using R2's S3-compatible interface. |
 | Website | Vite, TypeScript, HTML/CSS, Vega-Lite | Presents forecasts and accuracy without running a model in the browser. |
 | Website hosting and data access | GitHub Pages | Serves HTML, JavaScript, CSS and precomputed JSON. No server-side code or database queries run for visitors. |
@@ -48,12 +48,13 @@ Python accesses R2 through its S3-compatible interface, but that happens only in
 
 **Where the information comes from**
 
-The implemented collector uses only Octopus prices, NESO half-hourly demand and the combined NESO embedded wind/solar feed. It calculates time-of-day and weekend inputs locally. The broader table below describes future extensions and the earlier research; these feeds and calendar features are not all implemented.
+The implemented collector uses Octopus prices, NESO cardinal demand, embedded wind/solar, OPMR capacity and Elexon NDFD peak demand. It calculates calendar/seasonal/bank-holiday features locally. Transmission wind, diagnostic actuals, native half-hourly demand and ENTSO-E remain possible extensions.
 
 | Source | Information | Role in the proposed service |
 |---|---|---|
 | Octopus public tariff API | Published half-hourly Agile rates and tariff/product details | Supplies known prices and the eventual answers used to score and train the model. Maintain the correct tariff and regional mapping as products change. |
 | NESO embedded wind and solar forecasts | Expected generation connected to local distribution networks | Existing model inputs. These do not cover all UK wind generation. |
+| Elexon NDFD | Daily peak national demand forecast | Existing peak-demand model input. |
 | NESO Daily OPMR | Demand, available generation capacity and related system conditions | Existing model inputs describing how tight electricity supply is likely to be. |
 | NESO 2–14-day demand forecasts | Daily forecast points and a current half-hourly demand curve | The tested model uses a curve reconstructed from archived daily points. Collect the native half-hourly curve too and evaluate it alongside the reconstruction. |
 | Calendar, calculated locally | Time of day, weekdays, seasons and bank holidays | Existing inputs; no network feed needed. Separate Christmas/Easter features were tested but are not in the preferred candidate. |
@@ -123,11 +124,11 @@ GitHub schedules can run late or be missed. Schedule the routine refresh away fr
 
 **The forecasting model**
 
-**First implemented version:** ridge linear regression with demand, embedded wind, embedded solar, two smooth daily waves, an evening-peak flag and a weekend flag. It learns nine coefficients and an intercept from up to 180 days of eligible historical examples. Its fitted state is readable JSON. There is no holiday feature, ensemble or recent-error correction yet. Training, collection and forecasting are separate commands.
+**Current local model:** the selected **level/shape model with recent-error correction** from research. Its calculation matches the saved research checkpoint to numerical precision. Current demand uses the same cardinal-point reconstruction as historical training. The original ridge model remains as a readable baseline and powers fictional demos. Training, collection and forecasting remain separate commands.
 
-This version establishes the understandable data-to-website workflow; it has not earned the research model's accuracy claims. Its initial historical check was worse than the price one week earlier. The historical demand curves are reconstructed, while current collection uses native half-hourly forecasts; that transfer and the shorter unknown horizons require forward evaluation. The website distinguishes demo data, historical replay and current forecasts.
+Seven-day inference uses the underlying ensemble outside a complete unknown 48–72-hour window. Only that complete window receives the research shape and level adjustments. Missing required inputs leave gaps. [Validation notes](MODEL_VALIDATION.md) show that in the recent comparison the candidate improves substantially over the linear recipe but is slightly worse than the 60-day AgilePredict reproduction; it has no measured days 4–7 advantage.
 
-**Possible later upgrade:** the existing **level/shape model with recent-error correction** from research. It combines several tree-based statistical models. Trees learn relationships such as “a high demand forecast with little wind and limited spare capacity tends to mean a higher price.” They are inexpensive to fit and run.
+The research model combines several tree-based statistical models. Trees learn relationships such as “a high demand forecast with little wind and limited spare capacity tends to mean a higher price.” They are inexpensive to fit and run.
 
 The calculation has three stages:
 
@@ -137,7 +138,7 @@ The calculation has three stages:
 
 This last stage is already the practical version of the suggested autoregressive correction. Slightly different corrections produced only tiny further gains, so the simple three-day version remains the default. [Candidate implementation](RESEARCH.md), [autoregression experiments](RESEARCH.md).
 
-| Aspect | Inspected AgilePredict recipe | Richer research candidate, not the first implementation |
+| Aspect | Inspected AgilePredict recipe | Research recipe now implemented locally |
 |---|---|---|
 | Main technique | Average of CatBoost, LightGBM and ExtraTrees | Median ensemble, a year-long CatBoost shape model, and recent-error correction |
 | Training history | 60-day default in inspected code; 90-day version also reproduced | A mixture of 60, 90 and 180 days, plus the 365-day shape model |
@@ -149,7 +150,7 @@ This last stage is already the practical version of the suggested autoregressive
 
 The comparison is against upstream commit `505adda5820d91ceb369ca4728116c446567c530`, not a verified description of its current private production configuration. Our reproductions use common reduced inputs, direct retail-price targets and weekly fitting. Preserve the upstream MIT notice with reused code and pin the parameter definitions needed by our adapter. [Upstream audit](RESEARCH.md), [licensing and infrastructure evidence](DATA_LICENSING.md).
 
-Archived research mean absolute error, in p/kWh; lower is better. **These are not scores for the new linear model:**
+Archived research mean absolute error, in p/kWh; lower is better. **These are archived research results, not a new seven-day or live-service evaluation.** The narrower recent implementation check is recorded separately in [MODEL_VALIDATION.md](MODEL_VALIDATION.md).
 
 | Model | Earlier 375 issue dates | Recent 56 issue dates |
 |---|---:|---:|
@@ -159,25 +160,25 @@ Archived research mean absolute error, in p/kWh; lower is better. **These are no
 
 The earlier period is 7 July 2025–16 July 2026; the recent period is 20 July–13 September 2026. That is approximately **10% lower error earlier and 2–5% lower error recently**. The recent uncertainty intervals include improvement and deterioration, and these dates have been reused during model selection. We have not established superiority over the actual live AgilePredict service. [Full comparison and intervals](RESEARCH.md), [saved metrics](RESEARCH.md).
 
-There is an important product boundary: these figures cover daily 16:30 issues and **unknown prices 48–72 hours ahead**, using a complete 48-slot window. The candidate's shape adjustment must not simply be applied to all 144 slots. If adopting this upgrade, use published rates where available, investigate the existing demand-profile ensemble for earlier unknown periods, and reserve the candidate for the complete 48–72-hour window. Validate that combined policy and hourly issuance prospectively; the table does not establish their accuracy.
+There is an important product boundary: these figures cover daily 16:30 issues and **unknown prices 48–72 hours ahead**, using a complete 48-slot window. The implementation uses published rates where available, the median ensemble for other unknown periods, and reserves the candidate adjustment for a complete 48–72-hour window. Validate that combined policy and hourly issuance prospectively; the table does not establish their accuracy.
 
 When reproducing that research candidate, preserve the reconstructed demand input used in testing. Run the native half-hourly demand version alongside it as an experiment. Collect transmission-wind forecasts and later test them with properly fitted models. More detailed data can help, but replacing an input silently would change the model whose results we are quoting. Keep the two AgilePredict reproductions running locally as comparators; their live service is not a runtime dependency.
 
 **The first model and subsequent training**
 
-Start locally. The first application model can now be fitted with `make train-local`; its coefficients live in ignored `runtime_state/local/model.json`. The separate research archive also has a verified ensemble refit taking about 6.7 seconds. That saved benchmark used a 7 September 2026 training cutoff and is evidence that the calculation works; it is not a newly trained production model. [Existing refit code](RESEARCH.md), [benchmark results](RESEARCH.md).
+Start locally. `make train-local` now fits the research model into ignored `runtime_state/local/models/`; `model.json` points to its bundle and records provenance. The separate research archive also has a verified ensemble refit taking about 6.7 seconds. That saved benchmark used a 7 September 2026 training cutoff and is evidence that the calculation works; it is not a newly trained production model. [Existing refit code](RESEARCH.md), [benchmark results](RESEARCH.md).
 
 The first deployment should follow this sequence:
 
 1. **Prepare a local starting dataset.** Reuse the historical inputs and labels already collected, refreshing eligible records to a declared training cutoff. Export the compact 400-day training history, source buffers needed for current features, and available reference-forecast records. Keep their availability times and provenance. Downloading today's actuals cannot reconstruct forecasts that a provider has overwritten.
-2. **Fit and check locally.** Train the selected recipe, initially the simple linear model, save a versioned bundle, and run an example forecast through the public JSON exporter. Record the code version, dependencies, feature definitions, training cutoff and data hashes. Preserve the existing experimental training populations when reproducing their results.
+2. **Fit and check locally.** Train the selected research recipe, save a versioned bundle, and run an example forecast through the public JSON exporter. Record the code version, dependencies, feature definitions, training cutoff and data hashes. Preserve the existing experimental training populations when reproducing their results.
 3. **Seed R2 once, explicitly.** Upload the checked private starting dataset and manifest in a bounded administrative step. Routine local development does not perform this upload or require its credentials.
 4. **Reproduce the first production fit in Actions.** Use the same training function and input snapshot on the Linux runner, checking predictions against the local reference within an agreed numerical tolerance. Save the production bundle in R2. This avoids depending on a model file serialised on macOS being interchangeable with Linux; byte-identical model binaries are not required.
 5. **Run hourly inference and weekly refits.** Hourly jobs load the saved bundle and update inputs and predictions. Weekly jobs train a replacement from the rolling history and promote it only after checks pass. A failed refit keeps the previous good model.
 
 Thus, models can be trained both locally and in Actions. Local training is for development, experiments and recovery; Actions performs routine production refits. Weekly fitting updates the parameters of the selected recipe. It does not automatically search for a new model or promote whichever experiment wins that week.
 
-If we later add the research error correction, it needs an explicit starting policy too. If sufficiently recent, eligible reference forecasts and their completed outcomes are missing, start with zero correction and mark the model as warming up until the required three days are available. Do not invent past live predictions. This initial behaviour must be reported separately from the fully calibrated candidate's accuracy.
+The implemented research error correction has an explicit starting policy. If sufficiently recent, eligible reference forecasts and their completed outcomes are missing, start with zero correction and mark the model as warming up until the required three days are available. Do not invent past live predictions. This initial behaviour must be reported separately from the fully calibrated candidate's accuracy.
 
 **Local development without R2**
 
@@ -202,6 +203,8 @@ The following convenience commands **are implemented for local use**. R2 and pro
 | `make dev` | Start Vite using the synthetic example JSON, with automatic updates as frontend files change. |
 | `make dev DATA_MODE=local` | Start the same frontend using an existing local forecast export. |
 | `make collect-local` | Explicitly refresh provider data into local state, within collection limits. |
+| `make update-history-local` | Add observed input snapshots and price versions to monthly private history. |
+| `make score-local` | Score saved live issues by day ahead as actual prices arrive. |
 | `make train-local` | Fit the selected model from the local historical snapshot and save it locally. |
 | `make forecast-local` | Reuse the local model and snapshot to generate predictions and export website JSON; no retraining or downloading. |
 | `make preview-local` | Build and serve the complete static artifact locally, matching the Pages build. |
@@ -212,7 +215,7 @@ A fresh checkout should support frontend development immediately after dependenc
 
 The public JSON schema is the agreement between Python and the frontend. Check both example files and real exports against it, and run an offline local smoke check from input snapshot through model to built site before enabling deployment. Local preview can check the complete static artifact; real GitHub/Cloudflare permissions and cache behaviour still require a separate deployment check.
 
-**Current status:** the simple local model, bounded collector, dated historical replay, synthetic fixtures, public JSON exporter, frontend and unified local preview are implemented. The model saves readable coefficients in JSON; it does not use the research ensemble. Collection saves source snapshots but does not yet extend the training history with new outcomes. Automated history maintenance, R2 persistence, retention, production workflows and Pages publishing remain to be built.
+**Current status:** local collection, monthly history updates, research training, recent-error correction, saved-model inference, seven-day export, historical comparison, forward scoring, synthetic fixtures and the frontend are implemented. The research model uses private joblib bundles with JSON provenance; the linear baseline retains readable JSON coefficients. Reference issues are the first real collection from 16:30 up to 17:30 London time, never backdated. R2 persistence, bounded retention, production scheduling/promotion checks, Linux parity and Pages publishing remain to be built. Run local state-writing commands sequentially.
 
 **Secrets and permissions**
 
@@ -241,7 +244,7 @@ Use **D3 only where a particular interaction or visual design needs custom work*
 
 The browser reads relative static URLs such as `./data/forecast.json` and `./data/accuracy.json`. Include issue time, target intervals, region, units, known/predicted status, model version and freshness. Bundle the chart libraries with the site. Filtering, chart interactions and any appliance-cost calculations run in the browser on the downloaded data. There is no dynamic `/api` route and no browser request to an electricity provider or R2.
 
-Keep the frequently refreshed data small: the latest 72-hour curve and compact accuracy summaries, not the full historical archive. A visible page can check for updates about every ten minutes, pausing while hidden. Use normal caching and stable URLs rather than a unique cache-busting query on every request. A timestamp in the JSON tells the page whether anything actually changed.
+Keep the frequently refreshed data small: the latest seven-day curve and compact accuracy summaries, not the full historical archive. A visible page can check for updates about every ten minutes, pausing while hidden. Use normal caching and stable URLs rather than a unique cache-busting query on every request. A timestamp in the JSON tells the page whether anything actually changed.
 
 Before public launch, settle which official tariff values and other third-party fields may appear alongside our forecasts. The deployment artifact should contain only the intended outputs and source acknowledgements.
 
@@ -272,7 +275,7 @@ The CDN and browser caches can reduce origin traffic substantially, but the hit 
 
 The measured compact package is **43.04 MB**: about 39.15 MB of models, 1.59 MB of input rows, 0.52 MB of price labels, 1.75 MB of daily forecast history and a small correction file. Budget initially **100–150 MB of working state** including a previous model and recent source buffers. This is an estimate for the operational design, not a complete live store already built.
 
-For hourly 72-hour forecasts, the existing compact input/forecast tables are estimated to add roughly **100–150 MB per year**. Extra source series, full raw responses and diagnostic actuals are additional. Deduplication, monthly compression and bounded raw-response retention prevent repeated bulk downloads from dominating storage. [Measured sizes and assumptions](RESEARCH.md), [deployment assessment](RESEARCH.md).
+The earlier **100–150 MB per year** input/forecast estimate assumed hourly 72-hour issues. Seven-day issues contain about 2.3 times as many future rows; remeasure compression and retention before setting the production storage budget. Extra source series, full raw responses and diagnostic actuals are additional. Deduplication, monthly compression and bounded raw-response retention prevent repeated bulk downloads from dominating storage. [Measured sizes and assumptions](RESEARCH.md), [deployment assessment](RESEARCH.md).
 
 R2 Standard currently includes 10 GB-months of storage, one million Class A operations and ten million Class B operations per month, with free Internet egress. Our scheduled workload should fit within these allowances, allowing for other usage on the account. Your existing Cloudflare account with a card is suitable; enable the R2 subscription if needed. R2 remains metered above its allowance, but public popularity has no effect on its usage here. [R2 pricing](https://developers.cloudflare.com/r2/pricing/), [R2 setup](https://developers.cloudflare.com/r2/get-started/).
 

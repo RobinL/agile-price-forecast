@@ -7,7 +7,18 @@ name = "agile-forecast"
 version = "0.1.0"
 description = "A small, readable, local-first Agile price forecast"
 requires-python = ">=3.12,<3.13"
-dependencies = ["numpy>=2,<2.4", "pandas>=2.2,<3", "pyarrow>=19", "scikit-learn>=1.6,<2", "requests>=2.32,<3", "jsonschema>=4,<5"]
+dependencies = [
+    "numpy>=2,<2.4",
+    "pandas>=2.2,<3",
+    "pyarrow>=19",
+    "scikit-learn>=1.6,<2",
+    "requests>=2.32,<3",
+    "jsonschema>=4,<5",
+    "catboost==1.2.10",
+    "lightgbm==4.7.0",
+    "holidays==0.104",
+    "joblib==1.6.0",
+]
 
 [project.scripts]
 agile-forecast = "agile_forecast.cli:main"

@@ -13,7 +13,7 @@ def create_demo(state):
         )
     as_of = pd.Timestamp("2026-09-18T09:00:00Z")
     targets = pd.date_range(
-        as_of.normalize() - pd.Timedelta(days=120), periods=123 * 48, freq="30min"
+        as_of.normalize() - pd.Timedelta(days=120), periods=129 * 48, freq="30min"
     )
     local = targets.tz_convert("Europe/London")
     hour = local.hour + local.minute / 60
@@ -75,7 +75,7 @@ def create_demo(state):
                 {"name": "Example wind and solar forecast"},
             ],
             "notes": [
-                "Made-up demonstration data for 18–20 September 2026. These are not actual prices or measured forecasting accuracy."
+                "Made-up demonstration data for 18–25 September 2026. These are not actual prices or measured forecasting accuracy."
             ],
         },
     )

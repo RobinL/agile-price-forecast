@@ -102,12 +102,20 @@ async function render(f: Forecast) {
       ),
     );
     section.append(bottom);
-    if (slots.length !== 48)
+    if (new Set(slots.map((s) => s.utc_offset_minutes)).size > 1)
       section.append(
         element(
           "p",
           "clock-note",
           "Clocks change on this day. Hover to distinguish BST and GMT; the line breaks at the clock change.",
+        ),
+      );
+    if (slots[slots.length - 1].minute < 1410)
+      section.append(
+        element(
+          "p",
+          "clock-note",
+          "Partial final day: the seven-day forecast ends here.",
         ),
       );
     byId("days").append(section);
@@ -127,22 +135,71 @@ async function render(f: Forecast) {
       `${f.model.name}; ${f.model.training_rows.toLocaleString()} training intervals. Training cutoff: ${formatDate(f.model.trained_as_of)} London.`,
     ),
   );
-  if (f.accuracy)
+  byId("model-summary").textContent =
+    f.model.recipe_id === "level-shape-v1"
+      ? "Several tree models combine demand, renewable generation, available capacity and calendar patterns. A separate adjustment refines hours 48–72 ahead. Later days remain experimental."
+      : "This example uses a small linear model: demand, wind, solar and the daily pattern each add or subtract an adjustment.";
+  if (f.accuracy && "comparison" in f.accuracy) {
+    const labels: Record<string, string> = {
+      linear: "Linear baseline",
+      AP0_60: "AgilePredict recipe · 60 days",
+      AP0_90: "AgilePredict recipe · 90 days",
+      prediction: "Underlying ensemble",
+      candidate: "Research model",
+    };
     details.append(
       element(
         "p",
         "",
-        `One chronological check: average absolute error ${f.accuracy.model_mae_p_kwh.toFixed(2)} p/kWh, compared with ${f.accuracy.week_earlier_mae_p_kwh.toFixed(2)} p/kWh for the price 168 hours earlier (${f.accuracy.slots.toLocaleString()} matched slots). ${f.accuracy.description} This is not a comparison with AgilePredict.`,
+        "Historical comparison for unknown prices 48–72 hours ahead. Lower average error is better.",
       ),
     );
-  else
+    const table = element("table", "accuracy-table");
+    const head = element("tr", "");
+    head.append(
+      element("th", "", "Model"),
+      element("th", "", "Error · p/kWh"),
+      element("th", "", "Matched slots"),
+    );
+    table.append(head);
+    for (const row of f.accuracy.comparison) {
+      const tr = element("tr", "");
+      tr.append(
+        element("td", "", labels[row.model] ?? row.model),
+        element(
+          "td",
+          "",
+          row.mae_p_kwh === null ? "Not measured" : row.mae_p_kwh.toFixed(2),
+        ),
+        element("td", "", row.slots.toLocaleString()),
+      );
+      table.append(tr);
+    }
+    details.append(table, element("p", "", f.accuracy.description));
     details.append(
       element(
         "p",
         "",
-        "No measured real-world accuracy is claimed for this example.",
+        `Evaluation targets: ${formatDate(f.accuracy.target_start)} to ${formatDate(f.accuracy.target_end)} London. These scores do not measure accuracy across the full seven days.`,
       ),
     );
+  } else if (f.accuracy) {
+    details.append(
+      element(
+        "p",
+        "",
+        `Linear baseline: average absolute error ${f.accuracy.model_mae_p_kwh.toFixed(2)} p/kWh, compared with ${f.accuracy.week_earlier_mae_p_kwh.toFixed(2)} p/kWh for the week-earlier price (${f.accuracy.slots.toLocaleString()} matched slots). ${f.accuracy.description}`,
+      ),
+    );
+  } else {
+    details.append(
+      element(
+        "p",
+        "",
+        "No matching measured accuracy is attached to this model.",
+      ),
+    );
+  }
 }
 
 async function load() {

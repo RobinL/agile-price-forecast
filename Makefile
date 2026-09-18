@@ -4,7 +4,7 @@ UV_CACHE_DIR ?= $(CURDIR)/.cache/uv
 export UV_CACHE_DIR
 export PLAYWRIGHT_BROWSERS_PATH = $(CURDIR)/.cache/ms-playwright
 
-.PHONY: setup dev build preview-local demo-local import-research train-local evaluate-local collect-local forecast-local test format
+.PHONY: setup dev build preview-local demo-local import-research train-local evaluate-local collect-local forecast-local test format update-history-local verify-research-local score-local
 setup:
 	uv sync --locked
 	npm ci
@@ -34,3 +34,10 @@ test:
 format:
 	uv run ruff format src tests
 	npm run format
+
+update-history-local:
+	uv run agile-forecast update-history
+verify-research-local:
+	uv run agile-forecast verify-research --from ../initial_experiments
+score-local:
+	uv run agile-forecast score
