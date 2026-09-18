@@ -1,5 +1,5 @@
 import embed, { type Result } from "vega-embed";
-import { chartSpec, priceDomain, PRICE_BANDS } from "./chart";
+import { chartSpec, priceDomain, PRICE_COLOURS } from "./chart";
 import { cheapestPeriods, type CheapPeriod } from "./cheap-periods";
 import {
   chartDays,
@@ -230,15 +230,18 @@ async function load() {
   }
 }
 
-byId("price-legend").replaceChildren(
-  ...PRICE_BANDS.map((band) => {
-    const item = element("span", "");
-    const swatch = element("i", "");
-    swatch.style.backgroundColor = band.color;
-    item.append(swatch, document.createTextNode(band.label));
-    return item;
-  }),
+const gradient = element("div", "price-gradient");
+const firstPrice = PRICE_COLOURS[0].price;
+const lastPrice = PRICE_COLOURS[PRICE_COLOURS.length - 1].price;
+gradient.style.backgroundImage = `linear-gradient(to right, ${PRICE_COLOURS.map(
+  (stop) =>
+    `${stop.color} ${(100 * (stop.price - firstPrice)) / (lastPrice - firstPrice)}%`,
+).join(", ")})`;
+const colourLabels = element("div", "price-scale-labels");
+colourLabels.append(
+  ...PRICE_COLOURS.map((stop) => element("span", "", stop.label)),
 );
+byId("price-legend").replaceChildren(gradient, colourLabels);
 for (const id of ["highlight-enabled", "period-count", "period-hours"]) {
   byId(id).addEventListener("change", () => {
     if (current && currentLoadedAt) void render(current, currentLoadedAt);

@@ -3,15 +3,24 @@ import type { Slot } from "./data";
 
 import type { CheapPeriod } from "./cheap-periods";
 
-// Fixed price bands, shared by every day and the page legend.
-export const PRICE_BANDS = [
-  { label: "Below 0", color: "#538daf" },
-  { label: "0–10", color: "#529b95" },
-  { label: "10–20", color: "#659c65" },
-  { label: "20–30", color: "#c3a350" },
-  { label: "30–40", color: "#d47b65" },
-  { label: "40+", color: "#b74465" },
+// Fixed colour anchors, smoothly interpolated and shared by all days and the key.
+export const PRICE_COLOURS = [
+  { price: -5, label: "≤−5", color: "#538daf" },
+  { price: 5, label: "5", color: "#529b95" },
+  { price: 15, label: "15", color: "#659c65" },
+  { price: 25, label: "25", color: "#c3a350" },
+  { price: 35, label: "35", color: "#d47b65" },
+  { price: 45, label: "≥45", color: "#b74465" },
 ];
+const PRICE_COLOUR_SCALE = {
+  type: "linear" as const,
+  domain: PRICE_COLOURS.map((stop) => stop.price),
+  range: PRICE_COLOURS.map((stop) => stop.color),
+  interpolate: "rgb" as const,
+  clamp: true,
+  nice: false,
+  zero: false,
+};
 
 export function chartBars(slots: Slot[]) {
   const counts = new Map<number, number>();
@@ -190,21 +199,13 @@ export function chartSpec(
           color: {
             field: "price",
             type: "quantitative",
-            scale: {
-              type: "threshold",
-              domain: [0, 10, 20, 30, 40],
-              range: PRICE_BANDS.map((b) => b.color),
-            },
+            scale: PRICE_COLOUR_SCALE,
             legend: null,
           },
           stroke: {
             field: "price",
             type: "quantitative",
-            scale: {
-              type: "threshold",
-              domain: [0, 10, 20, 30, 40],
-              range: PRICE_BANDS.map((b) => b.color),
-            },
+            scale: PRICE_COLOUR_SCALE,
             legend: null,
           },
           tooltip: [

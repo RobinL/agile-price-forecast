@@ -93,19 +93,16 @@ h1 {
   flex-basis: 100%;
 }
 .price-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
+  width: min(100%, 340px);
 }
-.price-legend span {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-}
-.price-legend i {
-  width: 12px;
+.price-gradient {
   height: 12px;
-  border-radius: 2px;
+  border-radius: 3px;
+}
+.price-scale-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 5px;
 }
 .period-controls {
   margin: 18px 0;
