@@ -275,9 +275,12 @@ test("am/pm labels adapt on resize, stay aligned and do not overlap", async ({
     );
     const charts = await page.locator(".price-chart").evaluateAll((charts) =>
       charts.map((chart) => {
-        const labels = [
-          ...chart.querySelectorAll(".role-axis-label text"),
-        ].filter((label) => /(?:am|pm)$/.test(label.textContent ?? ""));
+        const labels = [...chart.querySelectorAll(".role-axis-label text")]
+          .filter((label) => /(?:am|pm)$/.test(label.textContent ?? ""))
+          .sort(
+            (a, b) =>
+              a.getBoundingClientRect().left - b.getBoundingClientRect().left,
+          );
         const bounds = labels.map((label) => label.getBoundingClientRect());
         return {
           labels: labels.map((label) => label.textContent),
