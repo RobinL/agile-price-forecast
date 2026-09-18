@@ -38,7 +38,6 @@ h1 {
 .notice {
   padding: 10px 14px;
   background: #e8ede3;
-  border-left: 3px solid #75927a;
   font-size: 11px;
   line-height: 1.5;
   white-space: nowrap;
@@ -46,7 +45,6 @@ h1 {
 }
 .notice.caution {
   background: #f1ecdc;
-  border-left-color: #b99355;
   color: #79633c;
 }
 .notice-label {
@@ -188,12 +186,17 @@ h1 {
 .period-price {
   color: #7a816e;
 }
-.day-card {
+#days {
   padding: 19px 20px 13px;
   background: #fffefa;
   border: 1px solid #dfe4d8;
   border-radius: 8px;
-  margin: 0 0 13px;
+}
+#days:empty {
+  display: none;
+}
+.day-card + .day-card {
+  margin-top: 14px;
 }
 .day-heading {
   display: flex;
@@ -276,7 +279,7 @@ select:focus-visible {
   .intro {
     padding-top: 30px;
   }
-  .day-card {
+  #days {
     padding: 16px 8px 10px;
   }
   .day-title {
