@@ -244,6 +244,13 @@ def test_public_artifact_rejects_private_files_and_demo_for_live_deployment(tmp_
     (tmp_path / "index.html").write_text("<html>public</html>")
     fixture = read_json(ROOT / "fixtures/site/data/forecast.json")
     save_json(tmp_path / "data/forecast.json", fixture)
+    with pytest.raises(ValueError, match="incomplete"):
+        production.check_site(tmp_path)
+    notices = tmp_path / "third-party-licences.txt"
+    notices.write_text("")
+    with pytest.raises(ValueError, match="licence notices"):
+        production.check_site(tmp_path)
+    notices.write_text("Synthetic dependency licence notice for this test.")
     assert production.check_site(tmp_path)["mode"] == "demo"
     with pytest.raises(ValueError, match="live forecast"):
         production.check_site(tmp_path, live=True)

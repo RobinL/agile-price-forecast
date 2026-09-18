@@ -175,7 +175,7 @@ To preview the complete real static build:
 make preview-local DATA_MODE=local
 ```
 
-`dist/` contains only frontend assets and the selected public JSON. `make build` defaults to the fictional fixture. All browser requests are static, using relative paths compatible with a GitHub Pages project site.
+`dist/` contains frontend assets, the selected public JSON and generated third-party software notices. `make build` defaults to the fictional fixture. The software-licence download is generated during the build; use `npm run preview` to check it locally. The forecast uses static requests and relative paths compatible with a GitHub Pages project site.
 
 ## Where the files live
 
@@ -211,7 +211,7 @@ Keep `runtime_state/` private and backed up. Git ignores it, model binaries, cre
 
 ## Cloud setup
 
-The [step-by-step guide](CLOUD_SETUP.md) explains the bucket, credentials, initial seed, manual trial and publishing. Private R2 storage and two Actions forecast runs have been verified, including model reuse. Hourly processing and Pages deployment are separately disabled until their repository variables are enabled. Nothing in the workflows changes repository visibility.
+The [step-by-step guide](CLOUD_SETUP.md) explains the bucket, credentials, initial seed, manual trial and publishing. Private R2 storage, saved-model reuse and Pages deployment have been verified. Hourly processing and Pages deployment are enabled and can be paused separately using their repository variables. Nothing in the workflows changes repository visibility.
 
 Initially the runner downloads one compressed state bundle, including the monthly history files, and uploads a new bundle after a successful forecast. A conditional pointer is promoted last. The current and previous bundles are retained, with request, processing and storage budgets. Only the checked static website goes to Pages; popularity cannot start R2 requests or model execution. The bundle format has explicit size limits; incremental monthly-object transport is a later improvement if history outgrows them.
 
@@ -220,6 +220,14 @@ Initially the runner downloads one compressed state bundle, including the monthl
 For another model, add a separate recipe and compare it prospectively rather than changing historical results. For another feed, add its normalizer and archive actual forecast vintages before relying on a backtest. The website need not change unless the public contract changes.
 
 [Proposed architecture](proposed_architecture.md), [research archive](RESEARCH.md), [source-use review](DATA_LICENSING.md) and [attribution](DATA_ATTRIBUTION.md) give the wider context. No real input datasets are checked in. AgilePredict's reproduced code carries its [upstream MIT notice](notices/AgilePredict-MIT.txt).
+
+## Licence and acknowledgements
+
+Thank you to [AgilePredict](https://agilepredict.com/) for publishing its [modelling code](https://github.com/fboundy/agile_predict). Our model builds substantially on that work, adapting parts of it and adding models and adjustments. We preserve its copyright and full MIT notice in [notices/AgilePredict-MIT.txt](notices/AgilePredict-MIT.txt), including in built Python packages.
+
+This project's original code and documentation are available under the [MIT licence](LICENSE). Existing third-party notices and licences still apply. This licence does **not** grant rights over provider datasets, tariff prices or AgilePredict service data; see [data attribution](DATA_ATTRIBUTION.md) and [the source-use review](DATA_LICENSING.md).
+
+Every website build uses Vite's licence generator to collect the bundled dependencies' notices into `dist/third-party-licences.txt`, linked from the footer. The deployment check requires that file and still rejects arbitrary extra files. Dependencies and their licences are taken from the installed locked versions, so updating a dependency also updates its published notice.
 
 ## Tests
 

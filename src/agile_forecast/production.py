@@ -290,22 +290,22 @@ def check_site(directory, live=False):
     """Pages receives ONLY the explicit public contract and bundled static assets."""
     directory = Path(directory)
     files = []
+    required = {"index.html", "data/forecast.json", "third-party-licences.txt"}
     for path in directory.rglob("*"):
         if path.is_symlink():
             raise ValueError("Public build cannot contain symlinks.")
         if not path.is_file():
             continue
         name = path.relative_to(directory).as_posix()
-        if name not in {"index.html", "data/forecast.json"} and not re.fullmatch(
+        if name not in required and not re.fullmatch(
             r"assets/[\w-]+\.(?:js|css)", name
         ):
             raise ValueError(f"Unexpected public build file: {name}")
         files.append(path)
-    if (
-        not (directory / "index.html").is_file()
-        or not (directory / "data/forecast.json").is_file()
-    ):
+    if any(not (directory / name).is_file() for name in required):
         raise ValueError("Public build is incomplete.")
+    if not (directory / "third-party-licences.txt").read_text().strip():
+        raise ValueError("Public build is missing software licence notices.")
     size = sum(path.stat().st_size for path in files)
     if size > 10_000_000:
         raise ValueError("Public build exceeds the 10 MB limit.")

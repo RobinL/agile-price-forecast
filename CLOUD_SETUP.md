@@ -74,8 +74,10 @@ This is a portability check, not an accuracy test.
 The updated state is uploaded as a new private bundle. A small `current.json`
 pointer changes only after that upload succeeds. The previous bundle is retained
 for recovery. Only then is the public JSON copied out for the Vite build. GitHub
-Pages receives `dist/`, after its file list, forecast schema and 10 MB size limit
-have been checked. A failed forecast does not replace the published site.
+Pages receives `dist/`, after its file list, required third-party software
+notices, forecast schema and 10 MB size limit have been checked. Vite generates
+the notices from the dependencies actually bundled into the website. A failed
+forecast does not replace the published site.
 
 The forecast is served entirely from static files. Visitors cannot start Actions
 or read R2, and the application does not turn visitor traffic into R2 requests or

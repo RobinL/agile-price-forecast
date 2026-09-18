@@ -74,7 +74,7 @@ Only a complete unknown 48–72-hour batch gets the research level/shape adjustm
 
 The compact research archive contains no days 4–7 inputs or predictions suitable for this comparison. Their error is **not measured**. Saved live predictions will be scored by day ahead as actual prices arrive; no initial forward score was available. Predictions already published at issue time are excluded from that scoring.
 
-Live issue times, source timestamp proxies and the seven-day extension are operating changes requiring prospective evaluation. Retain the reference collection near 16:30 London time as well as other refreshes. The site labels the week-ahead output experimental and explicitly limits the historical comparison to 48–72 hours.
+Live issue times, source timestamp proxies and the seven-day extension are operating changes requiring prospective evaluation. Retain the reference collection near 16:30 London time as well as other refreshes. The site labels the service experimental and distinguishes our historical reproduction comparison from AgilePredict's live service. The exact 48–72-hour evaluation scope is recorded here.
 
 ## Reproduction and private outputs
 
@@ -87,4 +87,4 @@ make score-local
 
 The private outputs are `runtime_state/local/checks/research_parity.json`, `accuracy.json`, `checks/comparison.parquet` and `checks/forward_scores.json`. Running `evaluate-local` against a later snapshot can change its eligible dates and results. This document records the check above; it is not automatically rewritten by training.
 
-The model and raw/history files remain ignored. Only aggregate findings, code and fictional website fixtures belong in Git. R2 persistence and two Linux Actions forecast runs were subsequently verified on 18 September 2026, including saved-model reuse. See [cloud setup status](CLOUD_SETUP.md) for deployment evidence and the remaining publishing steps. Those operational checks do not add accuracy evidence.
+The model and raw/history files remain ignored. Only aggregate findings, code and fictional website fixtures belong in Git. R2 persistence, saved-model reuse and Pages deployment were subsequently verified on 18 September 2026. See [cloud setup status](CLOUD_SETUP.md) for deployment evidence and operating instructions. Those operational checks do not add accuracy evidence.

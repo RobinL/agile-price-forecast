@@ -18,7 +18,12 @@ export default defineConfig({
   root: "web",
   base: "./",
   publicDir: publicFiles,
-  build: { outDir: "../dist", emptyOutDir: true },
+  build: {
+    outDir: "../dist",
+    emptyOutDir: true,
+    // Include the actual bundled dependencies' full notices in every deployment.
+    license: { fileName: "third-party-licences.txt" },
+  },
   server: {
     port: 5173,
     strictPort: true,

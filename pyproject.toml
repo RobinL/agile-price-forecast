@@ -6,6 +6,8 @@ build-backend = "hatchling.build"
 name = "agile-forecast"
 version = "0.1.0"
 description = "A small, readable, local-first Agile price forecast"
+license = "MIT"
+license-files = ["LICENSE", "notices/AgilePredict-MIT.txt"]
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "numpy>=2,<2.4",

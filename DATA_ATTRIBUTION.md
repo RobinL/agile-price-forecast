@@ -1,6 +1,6 @@
 # Data attribution
 
-These notices identify upstream sources used in the research. They do not license the complete combined dataset for redistribution. See [the per-source assessment](DATA_LICENSING.md).
+These notices identify the current application inputs and optional research sources. They do not license the complete combined dataset for redistribution. See [the per-source assessment](DATA_LICENSING.md). The repository's MIT licence covers its original code and documentation, not upstream datasets.
 
 **NESO**
 
@@ -16,7 +16,7 @@ Contains BMRS data © Elexon Limited copyright and database right 2024–2026.
 
 **Octopus Energy**
 
-Official Agile tariff prices obtained from the [Octopus Energy REST API](https://docs.octopus.energy/rest/guides/endpoints/). The project stitches specified tariff products and evaluates forecasts against published retail rates. Public bulk redistribution rights remain unconfirmed; this attribution is not a substitute for permission.
+Official Agile tariff prices obtained from the [Octopus Energy REST API](https://docs.octopus.energy/rest/guides/endpoints/). The project stitches specified tariff products and evaluates forecasts against published retail rates. The live site displays current published prices alongside our own estimates; its historical training archive remains private. Octopus encourages API-based applications, but an explicit redistribution licence for the displayed tariff values or a bulk archive has not been established. This attribution is not a substitute for permission; the outstanding clarification is recorded in [the source-use review](DATA_LICENSING.md).
 
 **Optional experimental sources**
 
