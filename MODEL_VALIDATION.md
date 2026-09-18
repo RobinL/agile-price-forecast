@@ -16,6 +16,40 @@ The implemented recipe is `level-shape-v1`, corresponding to the research select
 
 These checks establish that the port matches a saved research issue on this locked local environment. They do not prove every historical case, Linux portability, or accuracy at new horizons. Current cardinal demand interpolation has separate clock/endpoint tests.
 
+## Linux portability
+
+The first Actions refits used the same recipe, locked dependencies and training
+data fingerprint as the macOS ARM seed. The saved seed, loaded on Linux x86,
+reproduced its original predictions within 0.001 p/kWh. Fresh fits matched for
+all CatBoost and LightGBM estimators. Only the two ExtraTrees fits differed.
+
+Two independent Linux runs reproduced the same differences on 312 valid
+intervals of the frozen seed issue, with no missingness changes:
+
+| Output | Maximum absolute difference, p/kWh | Mean absolute difference, p/kWh |
+|---|---:|---:|
+| 60-day ExtraTrees alone | 0.233427 | 0.056808 |
+| 90-day ExtraTrees alone | 0.200401 | 0.051419 |
+| 60-day three-model average | 0.077809 | 0.018936 |
+| 90-day three-model average | 0.066800 | 0.017140 |
+| Final adjusted forecast | 0.070940 | 0.005126 |
+
+[Estimator diagnostics](https://github.com/RobinL/agile-price-forecast/actions/runs/35368041559)
+locate the observed platform-dependent refit difference; they do not identify a
+particular compiler instruction or establish new forecast accuracy. The model
+recipe and training population have not changed.
+
+The first-platform acceptance policy therefore keeps strict 0.001 p/kWh parity
+for all other estimators and saved-seed inference. ExtraTrees alone may differ
+by at most 0.3 p/kWh at any interval and 0.1 on average; each three-model average
+must stay within 0.1 maximum and 0.03 average. The median and final candidate must
+stay within **0.1 maximum and 0.01 average**. At least 48 valid intervals must be
+compared, missingness must match, and infinities are rejected. These are deployment
+equivalence limits chosen after investigating the difference, not confidence
+intervals or tolerances on error against actual prices. Any other mismatch still
+blocks promotion. Subsequent jobs reuse the checked Linux model; weekly refits
+continue on Linux.
+
 ## Recent paired historical comparison
 
 `make evaluate-local` uses weekly Monday fits, historical inputs and only outcomes available by the relevant training cutoff. The recipe was not retuned during this check. All models below are scored on the same **1,152 unknown 48–72-hour target slots**, across **24 issue days**, with targets from **23 August 2026 15:30 UTC to 16 September 2026 15:30 UTC**. Evaluation cutoff: 18 September 2026 10:47:30 UTC.

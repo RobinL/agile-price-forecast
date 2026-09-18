@@ -21,8 +21,13 @@ the same monthly history files, models and snapshots used locally. It collects
 new inputs, updates history, retrains if the saved model is at least seven days
 old, and forecasts. The first run on a new operating system also refits the
 original seed model and checks its predictions against a frozen local reference.
-It must agree within **0.001 p/kWh**, with matching training-data and library
-provenance, before proceeding. This is a portability check, not an accuracy test.
+Training-data and library provenance must match. Most predictions must agree
+within **0.001 p/kWh**. The first Linux trial identified a small ExtraTrees refit
+difference, so a narrowly bounded exception checks that the saved seed still
+predicts correctly on Linux, every other estimator still matches, and the final
+forecast differs by at most **0.1 p/kWh at any interval and 0.01 p/kWh on average**.
+Missingness must be unchanged. [Measured differences and full limits](MODEL_VALIDATION.md#linux-portability).
+This is a portability check, not an accuracy test.
 
 The updated state is uploaded as a new private bundle. A small `current.json`
 pointer changes only after that upload succeeds. The previous bundle is retained

@@ -323,3 +323,71 @@ def test_first_platform_fit_must_match_before_model_promotion(
             ]
             == 0
         )
+
+
+@pytest.fixture
+def measured_portability():
+    comparisons = {
+        name: {
+            "matched_finite_rows": 312,
+            "missingness_mismatches": 0,
+            "infinite_rows": 0,
+            "maximum_difference_p_kwh": 0.0,
+            "mean_absolute_difference_p_kwh": 0.0,
+        }
+        for name in production.PARITY_COLUMNS
+    }
+    for name in ["AP0_60", "AP0_90", "prediction", "candidate"]:
+        comparisons[name].update(
+            maximum_difference_p_kwh=0.08, mean_absolute_difference_p_kwh=0.006
+        )
+    diagnostics = {"seed_inference_matches": True, "estimators": {}}
+    for name in ["AP0_60", "AP0_90"]:
+        for estimator in ["CatBoostRegressor", "LGBMRegressor", "ExtraTreesRegressor"]:
+            extra = estimator == "ExtraTreesRegressor"
+            diagnostics["estimators"][f"{name}/{estimator}"] = {
+                "rows": 312,
+                "maximum": 0.24 if extra else 0.0,
+                "mean": 0.06 if extra else 0.0,
+            }
+    return comparisons, diagnostics
+
+
+def test_bounded_extratrees_policy_accepts_only_the_measured_kind_of_variation(
+    measured_portability,
+):
+    assert production.bounded_extratrees_refit(*measured_portability)
+
+
+@pytest.mark.parametrize(
+    "case",
+    [
+        "large_peak",
+        "large_average",
+        "missing",
+        "infinite",
+        "profile_changed",
+        "catboost_changed",
+        "seed_changed",
+        "too_few_rows",
+    ],
+)
+def test_bounded_extratrees_policy_rejects_other_changes(measured_portability, case):
+    comparisons, diagnostics = measured_portability
+    if case == "large_peak":
+        comparisons["candidate"]["maximum_difference_p_kwh"] = 0.11
+    elif case == "large_average":
+        comparisons["candidate"]["mean_absolute_difference_p_kwh"] = 0.011
+    elif case == "missing":
+        comparisons["candidate"]["missingness_mismatches"] = 1
+    elif case == "infinite":
+        comparisons["candidate"]["infinite_rows"] = 1
+    elif case == "profile_changed":
+        comparisons["cat90_profile"]["maximum_difference_p_kwh"] = 0.01
+    elif case == "catboost_changed":
+        diagnostics["estimators"]["AP0_60/CatBoostRegressor"]["maximum"] = 0.01
+    elif case == "seed_changed":
+        diagnostics["seed_inference_matches"] = False
+    elif case == "too_few_rows":
+        comparisons["candidate"]["matched_finite_rows"] = 1
+    assert not production.bounded_extratrees_refit(comparisons, diagnostics)
