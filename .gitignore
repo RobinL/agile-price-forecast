@@ -1,0 +1,45 @@
+# Credentials and local configuration
+.env
+.env.*
+!.env.example
+.transparency_token*
+*.pem
+*.key
+
+# Private state and research must never enter this repository
+/runtime_state/
+/artifacts/
+/data/
+/models/
+/initial_experiments/
+*.parquet
+*.joblib
+*.pickle
+*.pkl
+*.duckdb
+*.duckdb.*
+*.sqlite
+*.sqlite3
+*.sqlite3-*
+
+# Python environments and generated files
+.venv/
+.venv-*/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+catboost_info/
+
+# Frontend dependencies and build output
+node_modules/
+dist/
+coverage/
+
+# Local tools and operating-system files
+.DS_Store
+*.log
