@@ -144,9 +144,50 @@ export function dayTitle(day: string, reference: string): string {
     weekday: "long",
     timeZone: "Europe/London",
   }).format(new Date(`${day}T12:00:00Z`));
-  return difference === 0
-    ? `Today — ${weekday}`
-    : difference === 1
-      ? `Tomorrow — ${weekday}`
-      : weekday;
+  const date = new Date(`${day}T12:00:00Z`);
+  const number = date.getUTCDate();
+  const suffix =
+    number % 100 >= 11 && number % 100 <= 13
+      ? "th"
+      : ({ 1: "st", 2: "nd", 3: "rd" }[number % 10] ?? "th");
+  const month = new Intl.DateTimeFormat("en-GB", {
+    month: "long",
+    timeZone: "Europe/London",
+  }).format(date);
+  const prefix =
+    difference === 0 ? "Today - " : difference === 1 ? "Tomorrow - " : "";
+  return `${prefix}${weekday} ${number}${suffix} ${month}`;
+}
+
+// A shortened final date is a horizon boundary, not a whole forecast day.
+// Explicit unavailable slots still count towards coverage and leave visible gaps.
+export function chartDays(slots: Slot[]): string[] {
+  const days = [...new Set(slots.map((s) => s.day))];
+  if (!days.length) return days;
+  const last = slots.filter((s) => s.day === days[days.length - 1]);
+  const complete =
+    last[0].minute === 0 &&
+    last[last.length - 1].minute === 1410 &&
+    last.every(
+      (s, i) => i === 0 || Date.parse(s.start) === Date.parse(last[i - 1].end),
+    );
+  return complete ? days : days.slice(0, -1);
+}
+
+export function londonTime(date: Date): { minute: number; label: string } {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/London",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+  const value = (type: string) => parts.find((p) => p.type === type)!.value;
+  return {
+    minute:
+      Number(value("hour")) * 60 +
+      Number(value("minute")) +
+      Number(value("second")) / 60,
+    label: `Now ${value("hour")}:${value("minute")}`,
+  };
 }

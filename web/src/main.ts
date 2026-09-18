@@ -1,10 +1,20 @@
 import embed, { type Result } from "vega-embed";
-import { chartSpec, priceDomain } from "./chart";
-import { dayTitle, londonDay, parseForecast, type Forecast } from "./data";
+import { chartSpec, priceDomain, PRICE_BANDS } from "./chart";
+import { cheapestPeriods, type CheapPeriod } from "./cheap-periods";
+import {
+  chartDays,
+  dayTitle,
+  londonDay,
+  londonTime,
+  parseForecast,
+  type Forecast,
+} from "./data";
 import "./style.css";
 
 const views: Result[] = [];
 let current: Forecast | undefined;
+let currentLoadedAt: Date | undefined;
+let renderVersion = 0;
 const byId = (id: string) => document.getElementById(id)!;
 const formatDate = (value: string) =>
   new Intl.DateTimeFormat("en-GB", {
@@ -26,53 +36,133 @@ function updateNotice(f: Forecast) {
     "notice" + (f.mode !== "live" || ageHours > 2 ? " caution" : "");
   const label =
     f.mode === "demo"
-      ? "DEMONSTRATION"
+      ? "Demonstration"
       : f.mode === "replay"
-        ? "HISTORICAL REPLAY"
+        ? "Historical replay"
         : ageHours > 2
-          ? "STALE FORECAST"
-          : "LATEST FORECAST";
+          ? "Stale forecast"
+          : "Latest forecast";
   const description =
     f.mode === "demo"
-      ? "Made-up data to explore the site. Day labels refer to the example date."
+      ? "Made-up data"
       : f.mode === "replay"
-        ? "A saved historical example. Day labels refer to its original issue date."
-        : ageHours > 2
-          ? "The last successful update is over two hours old. Treat estimates as stale."
-          : "Published prices are confirmed; the dashed lines are estimates.";
+        ? "Saved historical example"
+        : "";
   notice.replaceChildren(
     element("strong", "notice-label", label),
-    element("span", "notice-copy", description),
+    document.createTextNode(description ? ` · ${description} · ` : " · "),
     element("time", "issue-time", `Issued ${formatDate(f.issued_at)} London`),
   );
 }
 
-async function render(f: Forecast) {
+function showPeriods(
+  periods: CheapPeriod[],
+  enabled: boolean,
+  count: number,
+  days: string[],
+) {
+  const results = byId("period-results");
+  results.replaceChildren();
+  if (!enabled) return;
+  if (periods.length < count)
+    results.append(
+      element(
+        "p",
+        "period-help",
+        periods.length
+          ? `Only ${periods.length} complete periods available.`
+          : "No complete future periods are available for this length.",
+      ),
+    );
+  const weekday = (day: string) =>
+    new Intl.DateTimeFormat("en-GB", {
+      weekday: "short",
+      timeZone: "Europe/London",
+    }).format(new Date(`${day}T12:00:00Z`));
+  // Include overnight endpoints when deciding whether a weekday is ambiguous.
+  const mentionedDays = [
+    ...new Set([
+      ...days,
+      ...periods.flatMap((period) => [
+        londonDay(new Date(period.start)),
+        londonDay(new Date(period.end)),
+      ]),
+    ]),
+  ].sort();
+  const dayName = (day: string) => {
+    const name = weekday(day);
+    const matches = mentionedDays.filter((date) => weekday(date) === name);
+    return matches.length > 1
+      ? `${day === matches[0] ? "This" : "Next"} ${name}`
+      : name;
+  };
+  const clock = (value: string) =>
+    new Intl.DateTimeFormat("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "Europe/London",
+      hourCycle: "h23",
+    }).format(new Date(value));
+  for (const [index, period] of periods.entries()) {
+    const startDay = londonDay(new Date(period.start));
+    const endDay = londonDay(new Date(period.end));
+    const timeRange = `${dayName(startDay)} ${clock(period.start)}–${startDay === endDay ? "" : `${dayName(endDay)} `}${clock(period.end)}`;
+    const link = document.createElement("a");
+    link.className = "period-choice";
+    link.href = `#day-${startDay}`;
+    link.title = `Average price: ${period.meanPrice.toFixed(2)}p/kWh`;
+    link.append(element("span", "period-rank", String(index + 1)));
+    const text = element("span", "");
+    text.append(
+      element("span", "period-time", timeRange),
+      document.createTextNode(" · "),
+    );
+    text.append(
+      element(
+        "span",
+        "period-price",
+        `${period.meanPrice.toFixed(2)}p/kWh${period.includesPredictions ? " (est.)" : ""}`,
+      ),
+    );
+    link.append(text);
+    results.append(link);
+  }
+}
+
+async function render(f: Forecast, loadedAt: Date) {
+  const version = ++renderVersion;
   views.forEach((view) => view.finalize());
   views.length = 0;
   updateNotice(f);
   const reference = londonDay(
-    f.mode === "live" ? new Date() : new Date(f.issued_at),
+    f.mode === "live" ? loadedAt : new Date(f.issued_at),
   );
   const domain = priceDomain(f.slots);
-  const days = [...new Set(f.slots.map((s) => s.day))];
+  const days = chartDays(f.slots);
+  const enabled = (byId("highlight-enabled") as HTMLInputElement).checked;
+  const countControl = byId("period-count") as HTMLSelectElement;
+  const hoursControl = byId("period-hours") as HTMLSelectElement;
+  countControl.disabled = hoursControl.disabled = !enabled;
+  byId("highlight-legend").hidden = !enabled;
+  byId("period-count-field").hidden = !enabled;
+  byId("period-hours-field").hidden = !enabled;
+  const count = Number(countControl.value);
+  const periods = enabled
+    ? cheapestPeriods(
+        f.slots.filter((s) => days.includes(s.day)),
+        count,
+        Number(hoursControl.value),
+        f.mode === "live" ? loadedAt : new Date(f.issued_at),
+      )
+    : [];
+  showPeriods(periods, enabled, count, days);
   byId("days").replaceChildren();
   for (const day of days) {
     const slots = f.slots.filter((s) => s.day === day);
     const section = element("section", "day-card");
+    section.id = `day-${day}`;
     const heading = element("div", "day-heading");
     heading.append(element("h2", "day-title", dayTitle(day, reference)));
-    heading.append(
-      element(
-        "span",
-        "day-date",
-        new Intl.DateTimeFormat("en-GB", {
-          day: "numeric",
-          month: "long",
-          timeZone: "Europe/London",
-        }).format(new Date(`${day}T12:00:00Z`)),
-      ),
-    );
     section.append(heading);
     const chart = element("div", "price-chart");
     chart.setAttribute(
@@ -80,129 +170,49 @@ async function render(f: Forecast) {
       `${dayTitle(day, reference)} electricity prices`,
     );
     section.append(chart);
-    const values = slots.flatMap((s) => (s.price === null ? [] : [s.price]));
     const missing = slots.filter((s) => s.status === "unavailable").length;
-    const bottom = element("div", "day-bottom");
-    bottom.append(
-      element(
-        "span",
-        "day-range",
-        values.length
-          ? `Shown range  ${Math.min(...values).toFixed(1)}–${Math.max(...values).toFixed(1)} p/kWh`
-          : "No prices available",
-      ),
-    );
-    bottom.append(
-      element(
-        "span",
-        "day-coverage",
-        missing
-          ? `${missing} half-hours unavailable — gaps are left blank`
-          : `${slots.length} half-hours · ${slots.filter((s) => s.status === "predicted").length} estimated`,
-      ),
-    );
-    section.append(bottom);
+    if (missing)
+      section.append(
+        element(
+          "p",
+          "day-coverage",
+          `${missing} ${missing === 1 ? "half-hour" : "half-hours"} unavailable — gaps are left blank`,
+        ),
+      );
     if (new Set(slots.map((s) => s.utc_offset_minutes)).size > 1)
       section.append(
         element(
           "p",
           "clock-note",
-          "Clocks change on this day. Hover to distinguish BST and GMT; the line breaks at the clock change.",
-        ),
-      );
-    if (slots[slots.length - 1].minute < 1410)
-      section.append(
-        element(
-          "p",
-          "clock-note",
-          "Partial final day: the seven-day forecast ends here.",
+          "Clocks change on this day. Repeated times share a half-hour position side by side; hover to distinguish BST and GMT.",
         ),
       );
     byId("days").append(section);
-    views.push(
-      await embed(chart, chartSpec(slots, domain), {
+    const result = await embed(
+      chart,
+      chartSpec(
+        slots,
+        domain,
+        f.mode === "live" && day === londonDay(loadedAt)
+          ? londonTime(loadedAt)
+          : undefined,
+        periods,
+      ),
+      {
         actions: false,
         renderer: "svg",
-      }),
+      },
     );
-  }
-  const details = byId("details");
-  details.replaceChildren(...f.notes.map((note) => element("p", "", note)));
-  details.append(
-    element(
-      "p",
-      "",
-      `${f.model.name}; ${f.model.training_rows.toLocaleString()} training intervals. Training cutoff: ${formatDate(f.model.trained_as_of)} London.`,
-    ),
-  );
-  byId("model-summary").textContent =
-    f.model.recipe_id === "level-shape-v1"
-      ? "Several tree models combine demand, renewable generation, available capacity and calendar patterns. A separate adjustment refines hours 48–72 ahead. Later days remain experimental."
-      : "This example uses a small linear model: demand, wind, solar and the daily pattern each add or subtract an adjustment.";
-  if (f.accuracy && "comparison" in f.accuracy) {
-    const labels: Record<string, string> = {
-      linear: "Linear baseline",
-      AP0_60: "AgilePredict recipe · 60 days",
-      AP0_90: "AgilePredict recipe · 90 days",
-      prediction: "Underlying ensemble",
-      candidate: "Research model",
-    };
-    details.append(
-      element(
-        "p",
-        "",
-        "Historical comparison for unknown prices 48–72 hours ahead. Lower average error is better.",
-      ),
-    );
-    const table = element("table", "accuracy-table");
-    const head = element("tr", "");
-    head.append(
-      element("th", "", "Model"),
-      element("th", "", "Error · p/kWh"),
-      element("th", "", "Matched slots"),
-    );
-    table.append(head);
-    for (const row of f.accuracy.comparison) {
-      const tr = element("tr", "");
-      tr.append(
-        element("td", "", labels[row.model] ?? row.model),
-        element(
-          "td",
-          "",
-          row.mae_p_kwh === null ? "Not measured" : row.mae_p_kwh.toFixed(2),
-        ),
-        element("td", "", row.slots.toLocaleString()),
-      );
-      table.append(tr);
+    if (version !== renderVersion) {
+      result.finalize();
+      return;
     }
-    details.append(table, element("p", "", f.accuracy.description));
-    details.append(
-      element(
-        "p",
-        "",
-        `Evaluation targets: ${formatDate(f.accuracy.target_start)} to ${formatDate(f.accuracy.target_end)} London. These scores do not measure accuracy across the full seven days.`,
-      ),
-    );
-  } else if (f.accuracy) {
-    details.append(
-      element(
-        "p",
-        "",
-        `Linear baseline: average absolute error ${f.accuracy.model_mae_p_kwh.toFixed(2)} p/kWh, compared with ${f.accuracy.week_earlier_mae_p_kwh.toFixed(2)} p/kWh for the week-earlier price (${f.accuracy.slots.toLocaleString()} matched slots). ${f.accuracy.description}`,
-      ),
-    );
-  } else {
-    details.append(
-      element(
-        "p",
-        "",
-        "No matching measured accuracy is attached to this model.",
-      ),
-    );
+    views.push(result);
   }
 }
 
 async function load() {
+  const loadedAt = new Date();
   try {
     const response = await fetch(
       `${import.meta.env.BASE_URL}data/forecast.json`,
@@ -210,13 +220,29 @@ async function load() {
     if (!response.ok)
       throw new Error("The forecast file is not available yet.");
     const next = parseForecast(await response.json());
-    await render(next);
     current = next;
+    currentLoadedAt = loadedAt;
+    await render(next, loadedAt);
   } catch (error) {
     byId("notice").className = "notice caution";
     byId("notice").textContent =
       `${error instanceof Error ? error.message : "Unable to load forecast."} Please try again later.`;
   }
+}
+
+byId("price-legend").replaceChildren(
+  ...PRICE_BANDS.map((band) => {
+    const item = element("span", "");
+    const swatch = element("i", "");
+    swatch.style.backgroundColor = band.color;
+    item.append(swatch, document.createTextNode(band.label));
+    return item;
+  }),
+);
+for (const id of ["highlight-enabled", "period-count", "period-hours"]) {
+  byId(id).addEventListener("change", () => {
+    if (current && currentLoadedAt) void render(current, currentLoadedAt);
+  });
 }
 
 void load();

@@ -1,49 +1,86 @@
 import type { VisualizationSpec } from "vega-embed";
 import type { Slot } from "./data";
 
-// Break the line at missing data, publication boundaries and clock changes.
-// Each half-hour price is flat until its interval ends (a step line).
-export function chartPoints(slots: Slot[]) {
-  const points: {
-    minute: number;
-    price: number;
-    status: string;
-    series: number;
-    clock: string;
-  }[] = [];
-  let series = 0;
-  let previous: Slot | undefined;
-  for (const slot of slots) {
-    if (slot.price === null) {
-      previous = undefined;
-      continue;
+import type { CheapPeriod } from "./cheap-periods";
+
+// Fixed price bands, shared by every day and the page legend.
+export const PRICE_BANDS = [
+  { label: "Below 0", color: "#538daf" },
+  { label: "0–10", color: "#529b95" },
+  { label: "10–20", color: "#659c65" },
+  { label: "20–30", color: "#c3a350" },
+  { label: "30–40", color: "#d47b65" },
+  { label: "40+", color: "#b74465" },
+];
+
+export function chartBars(slots: Slot[]) {
+  const counts = new Map<number, number>();
+  const seen = new Map<number, number>();
+  slots.forEach((s) => counts.set(s.minute, (counts.get(s.minute) ?? 0) + 1));
+  return slots.flatMap((slot) => {
+    // Autumn's repeated half-hours share a clock position side by side, so
+    // neither real interval is hidden by the other. Tooltips retain BST/GMT.
+    const index = seen.get(slot.minute) ?? 0;
+    seen.set(slot.minute, index + 1);
+    const width = 30 / counts.get(slot.minute)!;
+    const start = slot.minute + index * width;
+    return slot.price === null
+      ? []
+      : [
+          {
+            minute: start + 1,
+            end_minute: start + width - 1,
+            band_start: start,
+            band_end: start + width,
+            start: slot.start,
+            end: slot.end,
+            price: slot.price,
+            clock: slot.clock,
+            status:
+              slot.status === "published"
+                ? "Published price"
+                : "Model estimate",
+          },
+        ];
+  });
+}
+
+// Join each period's touching half-hours for one pair of edges and one badge.
+// Keep different period numbers separate even when their edges touch. Split a
+// period where the visible clock positions are disjoint (for example at DST).
+export function highlightRegions(slots: Slot[], periods: CheapPeriod[]) {
+  const bars = chartBars(slots);
+  return periods.flatMap((period, index) => {
+    const selected = bars
+      .filter(
+        (bar) =>
+          Date.parse(bar.start) >= Date.parse(period.start) &&
+          Date.parse(bar.end) <= Date.parse(period.end),
+      )
+      .sort((a, b) => a.band_start - b.band_start);
+    const regions: {
+      minute: number;
+      end_minute: number;
+      rank: number;
+      label: string;
+    }[] = [];
+    for (const bar of selected) {
+      const previous = regions[regions.length - 1];
+      if (previous && bar.band_start <= previous.end_minute) {
+        previous.end_minute = Math.max(previous.end_minute, bar.band_end);
+      } else
+        regions.push({
+          minute: bar.band_start,
+          end_minute: bar.band_end,
+          rank: index + 1,
+          label: `Cheapest period ${index + 1}`,
+        });
     }
-    if (
-      !previous ||
-      previous.status !== slot.status ||
-      previous.minute + 30 !== slot.minute ||
-      previous.utc_offset_minutes !== slot.utc_offset_minutes
-    )
-      series++;
-    const status =
-      slot.status === "published" ? "Published price" : "Model estimate";
-    points.push({
-      minute: slot.minute,
-      price: slot.price,
-      status,
-      series,
-      clock: slot.clock,
-    });
-    points.push({
-      minute: Math.min(slot.minute + 30, 1440),
-      price: slot.price,
-      status,
-      series,
-      clock: slot.clock,
-    });
-    previous = slot;
-  }
-  return points;
+    return regions.map((region) => ({
+      ...region,
+      midpoint: (region.minute + region.end_minute) / 2,
+    }));
+  });
 }
 
 export function priceDomain(slots: Slot[]): [number, number] {
@@ -58,20 +95,35 @@ export function priceDomain(slots: Slot[]): [number, number] {
 export function chartSpec(
   slots: Slot[],
   domain: [number, number],
+  now?: { minute: number; label: string },
+  periods: CheapPeriod[] = [],
 ): VisualizationSpec {
+  const bars = chartBars(slots);
+  const published: { minute: number; end_minute: number }[] = [];
+  for (const bar of bars
+    .filter((bar) => bar.status === "Published price")
+    .sort((a, b) => a.band_start - b.band_start)) {
+    const previous = published.at(-1);
+    if (previous && previous.end_minute === bar.band_start)
+      previous.end_minute = bar.band_end;
+    else published.push({ minute: bar.band_start, end_minute: bar.band_end });
+  }
+  const publishedLabel = published.length
+    ? [{ minute: Math.max(...published.map((bar) => bar.end_minute)) }]
+    : [];
+  const highlights = highlightRegions(slots, periods);
+  const edges = highlights.flatMap((region) => [
+    { minute: region.minute, label: region.label },
+    { minute: region.end_minute, label: region.label },
+  ]);
   return {
     $schema: "https://vega.github.io/schema/vega-lite/v6.json",
     width: "container",
-    height: 155,
-    autosize: { type: "fit", contains: "padding" },
+    // Fit the width only: annotations above the plot must not shrink the bars.
+    height: 110,
+    autosize: { type: "fit-x", contains: "padding" },
     padding: { left: 6, right: 12, top: 8, bottom: 5 },
-    data: { values: chartPoints(slots) },
-    mark: {
-      type: "line",
-      interpolate: "step-after",
-      strokeWidth: 2.5,
-      clip: true,
-    },
+    // Every day uses a full London clock day and the same global price range.
     encoding: {
       x: {
         field: "minute",
@@ -86,47 +138,175 @@ export function chartSpec(
           labelPadding: 9,
         },
       },
-      y: {
-        field: "price",
-        type: "quantitative",
-        scale: { domain, nice: false, zero: false },
-        axis: {
-          title: null,
-          tickCount: 4,
-          minExtent: 35,
-          maxExtent: 35,
-          labelPadding: 8,
+    },
+    layer: [
+      {
+        name: "published_background",
+        data: { values: published },
+        mark: { type: "rect", color: "#eeeeec", clip: true },
+        encoding: {
+          x2: { field: "end_minute" },
+          y: { value: 0 },
+          y2: { value: { expr: "height" } },
         },
       },
-      color: {
-        field: "status",
-        type: "nominal",
-        scale: {
-          domain: ["Published price", "Model estimate"],
-          range: ["#215c52", "#b36132"],
+      {
+        name: "cheap_periods",
+        data: { values: highlights },
+        mark: { type: "rect", color: "#ffe77a", clip: true },
+        encoding: {
+          opacity: {
+            field: "rank",
+            type: "quantitative",
+            scale: { domain: [1, 5], range: [0.55, 0.04], clamp: true },
+            legend: null,
+          },
+          x2: { field: "end_minute" },
+          y: { value: 0 },
+          y2: { value: { expr: "height" } },
+          tooltip: [{ field: "label", title: "Selected period" }],
         },
-        legend: null,
       },
-      strokeDash: {
-        field: "status",
-        type: "nominal",
-        scale: {
-          domain: ["Published price", "Model estimate"],
-          range: [
-            [1, 0],
-            [6, 4],
+      {
+        name: "price_bars",
+        data: { values: bars },
+        mark: { type: "bar", clip: true, strokeWidth: 0.8 },
+        encoding: {
+          x2: { field: "end_minute" },
+          y2: { datum: 0 },
+          y: {
+            field: "price",
+            type: "quantitative",
+            scale: { domain, nice: false, zero: false },
+            axis: {
+              title: null,
+              labelExpr: "format(datum.value, '~g') + 'p/kWh'",
+              tickCount: 4,
+              minExtent: 72,
+              maxExtent: 72,
+              labelPadding: 8,
+            },
+          },
+          color: {
+            field: "price",
+            type: "quantitative",
+            scale: {
+              type: "threshold",
+              domain: [0, 10, 20, 30, 40],
+              range: PRICE_BANDS.map((b) => b.color),
+            },
+            legend: null,
+          },
+          stroke: {
+            field: "price",
+            type: "quantitative",
+            scale: {
+              type: "threshold",
+              domain: [0, 10, 20, 30, 40],
+              range: PRICE_BANDS.map((b) => b.color),
+            },
+            legend: null,
+          },
+          tooltip: [
+            { field: "clock", title: "Half-hour starting" },
+            { field: "price", title: "Pence/kWh", format: ".2f" },
+            { field: "status", title: "Type" },
           ],
         },
-        legend: null,
       },
-      detail: { field: "series", type: "nominal" },
-      order: { field: "minute", type: "quantitative" },
-      tooltip: [
-        { field: "clock", title: "Half-hour starting" },
-        { field: "price", title: "p/kWh", format: ".2f" },
-        { field: "status", title: "Type" },
-      ],
-    },
+      {
+        name: "highlight_edges",
+        data: { values: edges },
+        mark: { type: "rule", color: "#e4cc5c", strokeWidth: 1.6 },
+        encoding: {
+          y: { value: 0 },
+          y2: { value: { expr: "height" } },
+          tooltip: [{ field: "label", title: "Selected period" }],
+        },
+      },
+      {
+        name: "highlight_badges",
+        data: { values: highlights },
+        mark: {
+          type: "circle",
+          size: 400,
+          color: "#ffe77a",
+          opacity: 1,
+          stroke: "#e4cc5c",
+          strokeWidth: 1,
+        },
+        encoding: {
+          x: { field: "midpoint", type: "quantitative" },
+          // Radius 10 plus the half-pixel border: the bottom touches y = 0.
+          y: { value: -10.5 },
+          tooltip: [{ field: "label", title: "Selected period" }],
+        },
+      },
+      {
+        name: "highlight_numbers",
+        data: { values: highlights },
+        mark: {
+          type: "text",
+          color: "#746024",
+          font: "system-ui",
+          fontSize: 11,
+          fontWeight: 600,
+          baseline: "middle",
+        },
+        encoding: {
+          x: { field: "midpoint", type: "quantitative" },
+          y: { value: -10.5 },
+          text: { field: "rank" },
+          tooltip: [{ field: "label", title: "Selected period" }],
+        },
+      },
+      {
+        name: "published_label",
+        data: { values: publishedLabel },
+        mark: {
+          type: "text",
+          text: "published prices ←",
+          align: "right",
+          baseline: "bottom",
+          color: "#555555",
+          font: "system-ui",
+          fontSize: 11,
+        },
+        encoding: {
+          x: { value: { expr: "clamp(scale('x', datum.minute), 110, width)" } },
+          y: { value: highlights.length ? -30 : -8 },
+        },
+      },
+      // Captured once at page load/refresh, never from the forecast issue time.
+      ...(now
+        ? [
+            {
+              name: "current_time",
+              data: { values: [now] },
+              mark: {
+                type: "rule" as const,
+                color: "#73816e",
+                strokeWidth: 1.5,
+              },
+            },
+            {
+              data: { values: [now] },
+              mark: {
+                type: "text" as const,
+                align:
+                  now.minute > 1200 ? ("right" as const) : ("left" as const),
+                baseline: "top" as const,
+                dx: now.minute > 1200 ? -5 : 5,
+                dy: 1,
+                color: "#53654c",
+                font: "system-ui",
+                fontSize: 11,
+              },
+              encoding: { y: { value: 0 }, text: { field: "label" } },
+            },
+          ]
+        : []),
+    ],
     config: {
       background: "transparent",
       view: { stroke: null },
@@ -134,6 +314,10 @@ export function chartSpec(
         labelFont: "system-ui",
         labelFontSize: 11,
         labelColor: "#737871",
+        titleFont: "system-ui",
+        titleFontSize: 11,
+        titleFontWeight: "normal",
+        titleColor: "#737871",
         domain: false,
         tickColor: "#cbd1c6",
         gridColor: "#e7e9e0",

@@ -8,107 +8,102 @@
       name="description"
       content="A simple, experimental Agile electricity price forecast, one day at a time."
     />
-    <title>Agile · A day at a time</title>
+    <title>Agile price forecast (beta)</title>
   </head>
   <body>
     <main>
-      <header class="masthead">
-        <a class="wordmark" href="./"
-          ><span class="mark" aria-hidden="true">↗</span> agile
-          <span class="wordmark-detail">a day at a time</span></a
-        >
-        <span class="prototype">SEVEN-DAY OUTLOOK · EXPERIMENTAL</span>
-      </header>
       <section class="intro">
-        <p class="eyebrow">ELECTRICITY, IN PERSPECTIVE</p>
-        <h1>See the shape<br />of the week ahead.</h1>
-        <p class="lede">
-          Half-hourly Agile prices, lined up so the cheaper hours are easier to
-          see.
-        </p>
+        <h1>Agile price forecast (beta)</h1>
       </section>
       <div id="notice" class="notice" role="status">Loading the forecast…</div>
-      <div class="chart-toolbar">
-        <div class="legend">
-          <span><i class="solid"></i> Published price</span
-          ><span><i class="dashed"></i> Model estimate</span>
-        </div>
-        <span class="units">p/kWh · VAT included · Region G</span>
-      </div>
-      <section id="days" aria-label="Daily electricity price charts"></section>
-      <p class="chart-note">
-        Same time axis. Same price scale. London time throughout. Standing
-        charges excluded.
-      </p>
-      <section class="explanation">
-        <div>
-          <p class="eyebrow">THE FORECAST, OPENLY EXPLAINED</p>
-          <h2>Public data. An experimental forecast.</h2>
-          <p id="model-summary">Loading the model description…</p>
-          <p>
-            Published Octopus prices always take precedence. Estimates can be
-            wrong, especially when the market behaves unusually.
-          </p>
-        </div>
-        <div class="source-list">
-          <a href="https://docs.octopus.energy/rest/guides/endpoints/"
-            >01
-            <span
-              >Octopus Agile prices<small>The prices we learn from</small></span
-            >
-            ↗</a
+      <section class="period-controls" aria-label="Cheapest period highlights">
+        <div class="period-fields">
+          <label class="highlight-toggle"
+            ><input id="highlight-enabled" type="checkbox" /> Highlight cheapest
+            periods</label
           >
+          <label id="period-count-field" hidden
+            >Periods
+            <select id="period-count" aria-label="Number of cheapest periods">
+              <option>1</option>
+              <option selected>2</option>
+              <option>3</option>
+              <option>4</option>
+              <option>5</option>
+            </select></label
+          >
+          <label id="period-hours-field" hidden
+            >Length
+            <select id="period-hours" aria-label="Period length">
+              <option value="2">2 hours</option>
+              <option value="2.5">2½ hours</option>
+              <option value="3" selected>3 hours</option>
+              <option value="4">4 hours</option>
+              <option value="6">6 hours</option>
+              <option value="8">8 hours</option>
+            </select></label
+          >
+        </div>
+        <div id="period-results" aria-live="polite"></div>
+      </section>
+      <section id="days" aria-label="Daily electricity price charts"></section>
+      <div class="chart-toolbar">
+        <div
+          class="price-legend"
+          id="price-legend"
+          aria-label="Price colours in pence per kilowatt-hour"
+        ></div>
+        <span class="units">p/kWh · VAT included · Region G</span>
+        <div class="legend" id="highlight-legend" hidden>
+          <span><i class="highlight"></i> Cheapest periods</span>
+        </div>
+      </div>
+      <footer>
+        <p>
+          Our forecasting model is our own implementation, partly adapted from
+          <a href="https://agilepredict.com/">AgilePredict’s</a> published
+          modelling code, with additional models and adjustments. In historical
+          tests, accuracy was similar to our reproduction of its model; this
+          does not establish how we compare with its live service. This project
+          primarily explores data visualisation and making forecasts easy to
+          use, rather than claiming an improvement in forecast accuracy.
+        </p>
+        <p>
+          This experimental service provides estimates, not confirmed future
+          prices. Updates may be late or missing, and errors in source data or
+          model assumptions can affect the results. We make no guarantees about
+          the service’s availability or the accuracy, completeness or
+          suitability of its outputs. Check published prices with your supplier
+          and use other information alongside these forecasts when making
+          financial, operational or energy-use decisions.
+        </p>
+        <p>
+          Data sources:
+          <a href="https://docs.octopus.energy/rest/guides/endpoints/"
+            >Octopus Agile prices</a
+          >
+          ·
           <a
             href="https://www.neso.energy/data-portal/2-14-days-ahead-national-demand-forecast"
-            >02
-            <span
-              >NESO demand forecast<small
-                >How much electricity we might need</small
-              ></span
-            >
-            ↗</a
+            >NESO demand forecast</a
           >
+          ·
           <a
             href="https://www.neso.energy/data-portal/embedded-wind-and-solar-forecasts"
-            >03
-            <span
-              >NESO wind &amp; solar<small
-                >Expected embedded generation</small
-              ></span
-            >
-            ↗</a
+            >NESO wind &amp; solar</a
           >
+          ·
           <a href="https://www.neso.energy/data-portal/daily-opmr"
-            >04
-            <span
-              >NESO available capacity<small
-                >Generation, imports and reserve requirements</small
-              ></span
-            >
-            ↗</a
+            >NESO available capacity</a
           >
-          <a href="https://developer.data.elexon.co.uk/"
-            >05
-            <span
-              >Elexon peak demand<small
-                >The daily national demand forecast</small
-              ></span
-            >
-            ↗</a
-          >
-        </div>
-      </section>
-      <details class="details">
-        <summary>Forecast notes and accuracy comparison</summary>
-        <div id="details"></div>
-      </details>
-      <footer>
-        <span>Independent experiment. Not an Octopus or NESO service.</span
-        ><span>Supported by National Energy SO Open Data.</span>
-        <span
-          >Contains BMRS data © Elexon Limited copyright and database right
-          2024–2026.</span
-        >
+          ·
+          <a href="https://developer.data.elexon.co.uk/">Elexon peak demand</a>.
+        </p>
+        <p>
+          Independent experiment. Not an Octopus or NESO service. Supported by
+          National Energy SO Open Data. Contains BMRS data © Elexon Limited
+          copyright and database right 2024–2026.
+        </p>
       </footer>
     </main>
     <script type="module" src="/src/main.ts"></script>

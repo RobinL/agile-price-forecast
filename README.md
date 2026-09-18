@@ -2,7 +2,7 @@
 
 Python collects electricity forecasts, applies a saved model and writes one small JSON file. A static Vite/Vega-Lite website draws the results as aligned daily charts. Everything runs locally; R2, GitHub Actions and publishing remain later steps.
 
-The app now uses our **selected research ensemble**, with **seven days of half-hourly predictions**. It shows today so far as well, so there are usually eight calendar-day charts, with a partial final day. Prices are Region G, p/kWh including VAT; standing charges are excluded. Published prices take precedence and missing required inputs leave gaps.
+The app now uses our **selected research ensemble**, with **seven days of half-hourly predictions**. The export includes today so far and a partial final date; the website omits that incomplete final day, normally showing seven full calendar-day charts. Prices are Region G, p/kWh including VAT; standing charges are excluded. Published prices take precedence and missing required inputs leave gaps.
 
 The model is experimental. Its research adjustment was tested at 48–72 hours ahead. Days 4–7 and different times of issue do not inherit those accuracy results. [Validation notes](MODEL_VALIDATION.md) explain what has actually been checked.
 
@@ -17,7 +17,9 @@ make dev
 
 Open <http://127.0.0.1:5173>. This uses the **fictional** example in `fixtures/site/data/forecast.json`. Frontend development needs no Python, research archive, API credentials or cloud access after installing dependencies. Edit `web/src/` and the page updates automatically.
 
-All days share the same time and price scales. Solid green lines are published prices; dashed amber lines are estimates. London clock-change days retain their 46 or 50 intervals.
+All days share the same time and price scales. Half-hour bars use fixed price bands: blue for negative prices, then teal, green, amber, coral and red as prices rise. All bars have solid fills. A pale grey background marks published prices, with a dark grey arrow label. Today has a London-time marker captured at page load or refresh. London clock-change days retain their 46 or 50 intervals, with repeated clock times drawn side by side.
+
+Highlights are off by default; enabling them reveals the period count and length controls. The optional yellow highlights select **1–5 non-overlapping future periods across all displayed days**, defaulting to two three-hour periods when enabled. The length control offers periods from two to eight hours. Selection minimizes their combined average price for the chosen count; adjacent periods may touch, and changing the count can change their boundaries. Each highlighted period has darker yellow side edges and a numbered yellow circle matching the ranked list. The list shows start/end times and average p/kWh, with links to the relevant day. Periods may cross midnight or a clock change, but never bridge a missing price. Elapsed intervals and the hidden incomplete final day are excluded. All calculations happen in the browser, with no additional API calls.
 
 ## How the pieces fit
 
@@ -58,6 +60,9 @@ Read these files in roughly this order:
 | `src/agile_forecast/demo.py` | Generate made-up examples. |
 | `schemas/forecast.schema.json` | Version 2 agreement between Python and the website. |
 | `web/src/data.ts`, `chart.ts`, `main.ts` | Read the JSON, define the Vega-Lite charts and lay out the page. |
+| `web/src/cheap-periods.ts` | Find the cheapest combination of complete, non-overlapping periods in UTC. |
+
+The current model exports point forecasts only. An uncertainty view needs calibrated prediction intervals and coverage checks by forecast horizon before it can be offered; disagreement between ensemble members is not a validated uncertainty band.
 
 ## The model in plain English
 
@@ -126,11 +131,11 @@ Collection bounds requests and response sizes and refuses unexpected hosts. Fore
 ```sh
 make verify-research-local # refit and compare with saved research outputs, offline
 make evaluate-local       # paired chronological comparison, weekly historical fits
-make forecast-local       # attach the matching evaluation to the site
+make forecast-local       # include the matching evaluation in the export
 make score-local          # evaluate saved live predictions after outcomes arrive
 ```
 
-`evaluate-local` writes `accuracy.json` and private per-slot diagnostics. It uses previously explored historical data, excludes published-at-issue targets, and compares exactly the same slots. It does not compare against AgilePredict's live service or establish seven-day accuracy. Scores attach only to the matching recipe fingerprint.
+`evaluate-local` writes `accuracy.json` and private per-slot diagnostics. It uses previously explored historical data, excludes published-at-issue targets, and compares exactly the same slots. It does not compare against AgilePredict's live service or establish seven-day accuracy. Scores attach only to the matching recipe fingerprint. They remain in the JSON for analysis; the webpage does not show an accuracy panel.
 
 `score-local` never regenerates old forecasts: it uses saved live issues, distinguishes fitted model versions and reports error by day ahead. Imported research reference predictions are excluded. Overlapping hourly forecasts are not statistically independent. Initially there may be no matured unknown prices to score.
 
