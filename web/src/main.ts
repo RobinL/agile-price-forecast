@@ -10,6 +10,9 @@ import {
   type Forecast,
 } from "./data";
 import "./style.css";
+import { setupAnalytics } from "./analytics";
+
+setupAnalytics();
 
 const views: Result[] = [];
 let current: Forecast | undefined;

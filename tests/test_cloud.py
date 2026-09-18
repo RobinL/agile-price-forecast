@@ -244,6 +244,7 @@ def test_public_artifact_rejects_private_files_and_demo_for_live_deployment(tmp_
     (tmp_path / "index.html").write_text("<html>public</html>")
     fixture = read_json(ROOT / "fixtures/site/data/forecast.json")
     save_json(tmp_path / "data/forecast.json", fixture)
+    (tmp_path / "preview.png").write_bytes((ROOT / "web/preview.png").read_bytes())
     with pytest.raises(ValueError, match="incomplete"):
         production.check_site(tmp_path)
     notices = tmp_path / "third-party-licences.txt"
@@ -252,6 +253,10 @@ def test_public_artifact_rejects_private_files_and_demo_for_live_deployment(tmp_
         production.check_site(tmp_path)
     notices.write_text("Synthetic dependency licence notice for this test.")
     assert production.check_site(tmp_path)["mode"] == "demo"
+    (tmp_path / "preview.png").write_bytes(b"not a PNG")
+    with pytest.raises(ValueError, match="1200 by 630 PNG"):
+        production.check_site(tmp_path)
+    (tmp_path / "preview.png").write_bytes((ROOT / "web/preview.png").read_bytes())
     with pytest.raises(ValueError, match="live forecast"):
         production.check_site(tmp_path, live=True)
     (tmp_path / "model.joblib").write_bytes(b"private")

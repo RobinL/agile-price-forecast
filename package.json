@@ -11,6 +11,7 @@
     "dev": "vite --host 127.0.0.1",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 127.0.0.1",
+    "social-preview": "node scripts/social-preview.mjs",
     "test": "playwright test",
     "format": "prettier --write web tests/browser vite.config.ts playwright.config.ts tsconfig.json schemas"
   },

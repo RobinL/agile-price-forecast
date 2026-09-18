@@ -75,7 +75,7 @@ The updated state is uploaded as a new private bundle. A small `current.json`
 pointer changes only after that upload succeeds. The previous bundle is retained
 for recovery. Only then is the public JSON copied out for the Vite build. GitHub
 Pages receives `dist/`, after its file list, required third-party software
-notices, forecast schema and 10 MB size limit have been checked. Vite generates
+notices, social preview image, forecast schema and 10 MB size limit have been checked. Vite generates
 the notices from the dependencies actually bundled into the website. A failed
 forecast does not replace the published site.
 

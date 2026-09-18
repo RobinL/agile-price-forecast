@@ -1,5 +1,6 @@
 import { defineConfig } from "vite";
 import { resolve } from "node:path";
+import { readFileSync } from "node:fs";
 
 // Changing charts never starts Python or contacts a provider. Only public JSON
 // is served. Local private state is deliberately outside every allowed root.
@@ -18,6 +19,19 @@ export default defineConfig({
   root: "web",
   base: "./",
   publicDir: publicFiles,
+  plugins: [
+    {
+      name: "social-preview",
+      generateBundle() {
+        // One reviewed public screenshot; never copy the private state directory.
+        this.emitFile({
+          type: "asset",
+          fileName: "preview.png",
+          source: readFileSync(resolve("web/preview.png")),
+        });
+      },
+    },
+  ],
   build: {
     outDir: "../dist",
     emptyOutDir: true,

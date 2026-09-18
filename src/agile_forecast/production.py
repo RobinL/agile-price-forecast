@@ -290,7 +290,12 @@ def check_site(directory, live=False):
     """Pages receives ONLY the explicit public contract and bundled static assets."""
     directory = Path(directory)
     files = []
-    required = {"index.html", "data/forecast.json", "third-party-licences.txt"}
+    required = {
+        "index.html",
+        "data/forecast.json",
+        "third-party-licences.txt",
+        "preview.png",
+    }
     for path in directory.rglob("*"):
         if path.is_symlink():
             raise ValueError("Public build cannot contain symlinks.")
@@ -306,6 +311,14 @@ def check_site(directory, live=False):
         raise ValueError("Public build is incomplete.")
     if not (directory / "third-party-licences.txt").read_text().strip():
         raise ValueError("Public build is missing software licence notices.")
+    header = (directory / "preview.png").read_bytes()[:24]
+    if (
+        header[:8] != b"\x89PNG\r\n\x1a\n"
+        or header[12:16] != b"IHDR"
+        or int.from_bytes(header[16:20], "big") != 1200
+        or int.from_bytes(header[20:24], "big") != 630
+    ):
+        raise ValueError("Social preview must be a 1200 by 630 PNG.")
     size = sum(path.stat().st_size for path in files)
     if size > 10_000_000:
         raise ValueError("Public build exceeds the 10 MB limit.")

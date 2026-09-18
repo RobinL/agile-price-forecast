@@ -37,3 +37,4 @@ Our original code and documentation use the [MIT licence](LICENSE). AgilePredict
 - [Model validation and limitations](MODEL_VALIDATION.md)
 - [Research background](RESEARCH.md)
 - [Local development commands](Makefile)
+- [Social previews and analytics](SOCIAL_SHARING.md)
