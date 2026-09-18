@@ -14,6 +14,7 @@ import { setupAnalytics } from "./analytics";
 
 setupAnalytics();
 
+const compactLayout = window.matchMedia("(max-width: 600px)");
 const views: Result[] = [];
 let current: Forecast | undefined;
 let currentLoadedAt: Date | undefined;
@@ -200,6 +201,7 @@ async function render(f: Forecast, loadedAt: Date) {
           ? londonTime(loadedAt)
           : undefined,
         periods,
+        compactLayout.matches,
       ),
       {
         actions: false,
@@ -250,6 +252,10 @@ for (const id of ["highlight-enabled", "period-count", "period-hours"]) {
     if (current && currentLoadedAt) void render(current, currentLoadedAt);
   });
 }
+
+compactLayout.addEventListener("change", () => {
+  if (current && currentLoadedAt) void render(current, currentLoadedAt);
+});
 
 void load();
 setInterval(

@@ -52,6 +52,30 @@ test("mobile charts fit without horizontal scrolling", async ({ page }) => {
       () => document.documentElement.scrollWidth <= window.innerWidth,
     ),
   ).toBe(true);
+  const firstChart = page.locator(".price-chart").first();
+  await expect(firstChart.getByText("0p", { exact: true })).toBeVisible();
+  await expect(
+    firstChart.locator(".role-axis-label text").filter({ hasText: "p/kWh" }),
+  ).toHaveCount(0);
+  const alignment = await page
+    .locator(".day-card")
+    .first()
+    .evaluate((card) => {
+      const heading = card.querySelector("h2")!.getBoundingClientRect().left;
+      const label = [...card.querySelectorAll(".role-axis-label text")]
+        .find((label) => label.textContent === "0p")!
+        .getBoundingClientRect().left;
+      const container = document
+        .querySelector("#days")!
+        .getBoundingClientRect().left;
+      return {
+        difference: Math.abs(heading - label),
+        inset: label - container,
+      };
+    });
+  expect(alignment.difference).toBeLessThan(2);
+  expect(alignment.inset).toBeGreaterThan(15);
+  expect(alignment.inset).toBeLessThan(25);
   await page.screenshot({ path: "test-results/mobile.png", fullPage: true });
 });
 
@@ -263,7 +287,7 @@ test("am/pm labels adapt on resize, stay aligned and do not overlap", async ({
   for (const width of [320, 390, 768, 1280]) {
     await page.setViewportSize({ width, height: 900 });
     await expect(labels).toHaveCount(
-      width === 1280 ? 25 : width === 768 ? 13 : width === 320 ? 5 : 9,
+      width === 1280 ? 25 : width === 768 ? 13 : width === 320 ? 7 : 9,
     );
     // Each of the seven Vega views handles the resize independently.
     await expect(
@@ -271,8 +295,14 @@ test("am/pm labels adapt on resize, stay aligned and do not overlap", async ({
         .locator(".price-chart .role-axis-label text")
         .filter({ hasText: /(?:am|pm)$/ }),
     ).toHaveCount(
-      (width === 1280 ? 25 : width === 768 ? 13 : width === 320 ? 5 : 9) * 7,
+      (width === 1280 ? 25 : width === 768 ? 13 : width === 320 ? 7 : 9) * 7,
     );
+    await expect(
+      page
+        .locator(".price-chart")
+        .first()
+        .getByText(width <= 600 ? "0p" : "0p/kWh", { exact: true }),
+    ).toBeVisible();
     const charts = await page.locator(".price-chart").evaluateAll((charts) =>
       charts.map((chart) => {
         const labels = [...chart.querySelectorAll(".role-axis-label text")]

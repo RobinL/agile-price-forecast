@@ -282,6 +282,9 @@ select:focus-visible {
   #days {
     padding: 16px 8px 10px;
   }
+  .day-heading {
+    padding-left: 11px;
+  }
   .day-title {
     font-size: 15px;
   }

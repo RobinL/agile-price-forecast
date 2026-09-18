@@ -106,6 +106,7 @@ export function chartSpec(
   domain: [number, number],
   now?: { minute: number; label: string },
   periods: CheapPeriod[] = [],
+  compact = false,
 ): VisualizationSpec {
   const bars = chartBars(slots);
   const published: { minute: number; end_minute: number }[] = [];
@@ -196,11 +197,16 @@ export function chartSpec(
             scale: { domain, nice: false, zero: false },
             axis: {
               title: null,
-              labelExpr: "format(datum.value, '~g') + 'p/kWh'",
+              labelExpr: compact
+                ? "format(datum.value, '~g') + 'p'"
+                : "format(datum.value, '~g') + 'p/kWh'",
               tickCount: 4,
-              minExtent: 72,
-              maxExtent: 72,
-              labelPadding: 8,
+              minExtent: compact ? 40 : 72,
+              maxExtent: compact ? 40 : 72,
+              // Left-align mobile labels with the day heading, about 3ch
+              // inside the shared container, while reserving room for negatives.
+              labelAlign: compact ? "left" : "right",
+              labelPadding: compact ? 30 : 8,
             },
           },
           color: {
