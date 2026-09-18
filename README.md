@@ -1,6 +1,8 @@
 # Agile price forecast
 
-Python collects electricity forecasts, applies a saved model and writes one small JSON file. A static Vite/Vega-Lite website draws the results as aligned daily charts. Everything runs locally. An explicit R2 adapter and GitHub Actions workflows now wrap the same pipeline; cloud provisioning and publishing are still disabled pending the [guided setup](CLOUD_SETUP.md).
+Python collects electricity forecasts, applies a saved model and writes one small JSON file. A static Vite/Vega-Lite website draws the results as aligned daily charts. The same pipeline runs locally and in GitHub Actions, which keeps its private state in R2 and publishes the static site to GitHub Pages.
+
+**Live website: [www.robinlinacre.com/agile-price-forecast](https://www.robinlinacre.com/agile-price-forecast/).** Forecast updates are scheduled hourly, at minute 37; GitHub may delay scheduled runs. An open, visible page checks for updated data every ten minutes. See [cloud setup and operating controls](CLOUD_SETUP.md) for deployment details and how to pause updates.
 
 The app now uses our **selected research ensemble**, with **seven days of half-hourly predictions**. The export includes today so far and a partial final date; the website omits that incomplete final day, normally showing seven full calendar-day charts. Prices are Region G, p/kWh including VAT; standing charges are excluded. Published prices take precedence and missing required inputs leave gaps.
 

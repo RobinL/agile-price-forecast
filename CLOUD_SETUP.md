@@ -1,14 +1,50 @@
 # Moving the local forecast to GitHub Actions and R2
 
+The website is live at
+**[www.robinlinacre.com/agile-price-forecast](https://www.robinlinacre.com/agile-price-forecast/)**.
+The repository is public. Pages publishes through Actions, and the `github-pages`
+environment accepts deployments only from the `main` branch. Both
+`PAGES_ENABLED` and `FORECAST_SCHEDULE_ENABLED` are enabled. The hourly schedule
+runs at minute 37; GitHub can delay scheduled runs.
+
 The private R2 bucket has been seeded and its download/checksum round trip passed.
-Two Linux Actions forecast runs have passed: the first fitted and checked the
-Linux model in a 64-second job; the second restored and reused it in 48 seconds.
-Both collected fresh data, saved updated R2 state and built a checked live site
-of about 0.99 MB. The repository is still private, with scheduled runs and Pages
-publication disabled pending the repository-visibility decision.
+The first Linux forecast fitted and checked its model in 64 seconds; the second
+restored and reused it in 48 seconds. The first public deployment on
+18 September 2026 refreshed the forecast in 71 seconds and deployed in another
+10 seconds. It published the real forecast issued at 18:13 London time, using
+the saved Linux model, with 94 published, 277 predicted and two unavailable
+half-hours. The incomplete final date is omitted by the website.
 
 Evidence: [first complete forecast](https://github.com/RobinL/agile-price-forecast/actions/runs/35368521829),
-[saved-model reuse](https://github.com/RobinL/agile-price-forecast/actions/runs/35368747368).
+[saved-model reuse](https://github.com/RobinL/agile-price-forecast/actions/runs/35368747368),
+[first public deployment](https://github.com/RobinL/agile-price-forecast/actions/runs/35372958788).
+The complete pipeline and deployment were verified through a manual run; the
+hourly schedule was enabled afterwards, so the first scheduled run remains a
+follow-up check in Actions.
+
+## Operating the live site
+
+- View runs under **Actions → Refresh forecast**. A successful run updates both
+  private R2 state and the public site. Use **Run workflow** for a manual refresh;
+  leave forced refitting off unless intentionally retraining.
+- Set repository variable `FORECAST_SCHEDULE_ENABLED=false` to pause unattended
+  processing. Manual runs remain available. Set `PAGES_ENABLED=false` to stop
+  new deployments. Neither setting removes the currently published website.
+- The browser checks for fresh static JSON every ten minutes while visible.
+  The deployed JSON has `Cache-Control: max-age=600`, so an update need not
+  appear immediately. The page displays the forecast's issue time and marks it
+  stale after two hours.
+- A failed refresh leaves the last published site available. Inspect the failed
+  Actions step before rerunning; avoid changing private state pointers by hand.
+
+The existing account Pages domain supplies the project path; no project-specific
+CNAME or DNS change was needed. HTTPS works, and the non-www address redirects
+to www. The deployed JSON passed schema and freshness checks, all seven charts
+rendered without browser errors, and the mobile layout and cheapest-period
+controls were checked. The page loads its static assets and JSON, plus the
+domain's existing Cloudflare analytics beacon and favicon. No browser request
+goes to private R2 or a forecasting API. No Cloudflare credentials or zone
+settings were changed during deployment.
 
 ## What happens on each run
 
@@ -41,9 +77,10 @@ for recovery. Only then is the public JSON copied out for the Vite build. GitHub
 Pages receives `dist/`, after its file list, forecast schema and 10 MB size limit
 have been checked. A failed forecast does not replace the published site.
 
-The browser downloads static files only. Visitors cannot start Actions or read
-R2, and visitor numbers do not cause R2 requests or Worker invocations. Cloudflare
-CDN/custom-domain setup is optional and can come later.
+The forecast is served entirely from static files. Visitors cannot start Actions
+or read R2, and the application does not turn visitor traffic into R2 requests or
+Worker invocations. The existing custom domain already passes through Cloudflare;
+no new Worker or public R2 endpoint is part of this setup.
 
 ## Why one bundle initially
 
@@ -160,8 +197,8 @@ Action versions are pinned to commits and should be reviewed when updated.
 
 ## 5. Enable publishing, then the schedule
 
-As agreed, make the repository public yourself when ready to use free public
-Actions and Pages. GitHub Pages is available for public repositories on GitHub
+Make the repository public when ready to use free public Actions and Pages
+(completed for this deployment). GitHub Pages is available for public repositories on GitHub
 Free; private-repository Pages requires an eligible paid plan. A private repo
 does not imply that a Pages website is private.
 [GitHub Pages availability](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages).
@@ -200,8 +237,8 @@ original issue time and stale warning.
   Vite builds without R2 secrets in its environment.
 
 These checks are covered by local failure tests. Live R2 restore, conditional
-state promotion and two Actions forecast runs have also succeeded. Pages
-publishing still requires the visibility decision and first deployment.
+state promotion, saved-model reuse and the first Pages deployment have also
+succeeded. Scheduled operation should be checked in the Actions run history.
 If something fails, inspect the Actions log first. Avoid manually replacing
 `current.json` or deleting bundles it references. Old published pages keep
 working while a fix is prepared.
