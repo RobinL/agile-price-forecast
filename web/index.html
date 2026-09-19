@@ -69,37 +69,40 @@
             <option value="G">North West England</option>
           </select>
         </label>
+        <section
+          class="period-controls"
+          aria-label="Cheapest period highlights"
+        >
+          <div class="period-fields">
+            <label class="highlight-toggle"
+              ><input id="highlight-enabled" type="checkbox" /> Highlight
+              cheapest periods</label
+            >
+            <label id="period-count-field" hidden
+              >Periods
+              <select id="period-count" aria-label="Number of cheapest periods">
+                <option>1</option>
+                <option selected>2</option>
+                <option>3</option>
+                <option>4</option>
+                <option>5</option>
+              </select></label
+            >
+            <label id="period-hours-field" hidden
+              >Length
+              <select id="period-hours" aria-label="Period length">
+                <option value="2">2 hours</option>
+                <option value="2.5">2½ hours</option>
+                <option value="3" selected>3 hours</option>
+                <option value="4">4 hours</option>
+                <option value="6">6 hours</option>
+                <option value="8">8 hours</option>
+              </select></label
+            >
+          </div>
+          <div id="period-results" aria-live="polite"></div>
+        </section>
       </div>
-      <section class="period-controls" aria-label="Cheapest period highlights">
-        <div class="period-fields">
-          <label class="highlight-toggle"
-            ><input id="highlight-enabled" type="checkbox" /> Highlight cheapest
-            periods</label
-          >
-          <label id="period-count-field" hidden
-            >Periods
-            <select id="period-count" aria-label="Number of cheapest periods">
-              <option>1</option>
-              <option selected>2</option>
-              <option>3</option>
-              <option>4</option>
-              <option>5</option>
-            </select></label
-          >
-          <label id="period-hours-field" hidden
-            >Length
-            <select id="period-hours" aria-label="Period length">
-              <option value="2">2 hours</option>
-              <option value="2.5">2½ hours</option>
-              <option value="3" selected>3 hours</option>
-              <option value="4">4 hours</option>
-              <option value="6">6 hours</option>
-              <option value="8">8 hours</option>
-            </select></label
-          >
-        </div>
-        <div id="period-results" aria-live="polite"></div>
-      </section>
       <section id="days" aria-label="Daily electricity price charts"></section>
       <div class="chart-toolbar">
         <div

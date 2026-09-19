@@ -103,18 +103,17 @@ h1 {
   margin-top: 5px;
 }
 .period-controls {
-  margin: 18px 0;
-  border: 1px solid #dedec9;
-  border-radius: 8px;
-  padding: 15px 18px;
-  background: #faf9ee;
+  flex-basis: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
 }
 .period-fields {
   display: flex;
-  gap: 16px;
+  gap: 8px 16px;
   align-items: center;
   flex-wrap: wrap;
-  font-size: 12px;
+  font-size: inherit;
 }
 .period-fields label[hidden] {
   display: none;
@@ -125,13 +124,15 @@ h1 {
   align-items: center;
 }
 .highlight-toggle {
-  font-weight: 600;
+  font-weight: 400;
+  min-height: 28px;
   margin-right: auto;
 }
 .period-fields input {
   accent-color: #6c7d44;
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
+  margin: 0;
 }
 .period-fields select {
   font: inherit;
@@ -262,7 +263,7 @@ select:focus-visible {
   .period-fields {
     display: grid;
     grid-template-columns: auto auto;
-    gap: 12px;
+    gap: 6px 12px;
   }
   .highlight-toggle {
     grid-column: 1 / -1;
@@ -336,6 +337,7 @@ select:focus-visible {
   background: #e8ede3;
   padding: 6px 12px;
   font-size: 11px;
+  margin-bottom: 14px;
 }
 .forecast-bar .notice {
   padding: 0;
