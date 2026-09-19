@@ -13,12 +13,14 @@ from urllib.parse import urljoin, urlparse
 import pandas as pd
 import requests
 
+from .regions import REGIONS, convert
 from .features import OPMR, attach_profiles, engineer, future_intervals
 from .storage import read_json, read_table, save_snapshot
 
 CATALOGUE = "https://api.neso.energy/api/3/action/datapackage_show"
 DEMAND = "https://api.neso.energy/dataset/633daec6-3e70-444a-88b0-c4cef9419d40/resource/7c0411cd-2714-4bb5-a408-adb065edf34d/download/ng-demand-14da-hh.csv"
 PRODUCT = "AGILE-24-10-01"
+MAX_REQUESTS = 40  # Includes 14 regional price endpoints and bounded redirects.
 # NESO sometimes redirects downloads to its own public object store. This is
 # provider infrastructure, not our private R2 bucket. Never expose signed URLs.
 NESO_DOWNLOAD_HOST = "83025b28472d6aa2bf5ae59f3724aa78.eu.r2.cloudflarestorage.com"
@@ -53,7 +55,7 @@ class Downloads:
         return body
 
     def download(self, url, params=None, redirects=0):
-        if self.calls >= 16:
+        if self.calls >= MAX_REQUESTS:
             raise ValueError("Collection request budget exhausted.")
         allowed = {
             "api.neso.energy",
@@ -279,6 +281,38 @@ def collect(state, product=PRODUCT):
     )
     if prices.target_start.duplicated().any():
         raise ValueError("Duplicate official price intervals.")
+    regional_prices = {}
+    for code in REGIONS:
+        if code == "G":
+            continue
+        regional = json.loads(
+            client.get(
+                f"Octopus prices {code}",
+                url.replace(f"{product}-G/", f"{product}-{code}/"),
+                {
+                    "period_from": today.isoformat(),
+                    "period_to": (today + pd.DateOffset(days=3)).isoformat(),
+                    "page_size": 200,
+                },
+            )
+        )
+        if regional.get("next") or not regional.get("results"):
+            raise ValueError(f"Incomplete regional price response: {code}")
+        rates = {
+            pd.Timestamp(row["valid_from"]).isoformat(): float(row["value_inc_vat"])
+            for row in regional["results"]
+        }
+        for row in prices.itertuples():
+            actual = rates.get(row.target_start.isoformat())
+            if actual is not None and row.price_p_kwh < 95 and actual < 95:
+                if (
+                    abs(convert(row.price_p_kwh, row.target_start, code) - actual)
+                    > 0.025
+                ):
+                    raise ValueError(
+                        f"Regional formula no longer matches Octopus: {code}"
+                    )
+        regional_prices[code] = rates
     as_of = pd.Timestamp.now(tz="UTC")
     f = pd.DataFrame({"target_start": future_intervals(as_of)})
     f["target_end"] = f.target_start + pd.Timedelta(minutes=30)
@@ -359,6 +393,7 @@ def collect(state, product=PRODUCT):
             "as_of": as_of.isoformat(),
             "region": "G",
             "product": product,
+            "regional_prices": regional_prices,
             "sources": [r for r in client.records if r["name"] != "Feed catalogue"],
             "notes": notes,
         },

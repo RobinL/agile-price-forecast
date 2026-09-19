@@ -20,3 +20,25 @@ The current application implements the selected research ensemble (`level-shape-
 Keep future model changes explicit, retain upstream licence notices and check their predictions against saved research outputs. Do not add the sibling research directory to the application's import path or copy its datasets into Git. Small synthetic fixtures support public tests; private historical inputs remain local or in private R2 storage.
 
 The research checkout of AgilePredict is pinned to [commit 505adda5820d91ceb369ca4728116c446567c530](https://github.com/fboundy/agile_predict/tree/505adda5820d91ceb369ca4728116c446567c530). Its MIT code licence is separate from the usage terms for published service forecasts and input datasets.
+
+### Regional prices
+
+The fitted model and recent-error correction remain in North West (G) retail
+units. `regions.py` converts its uncapped predictions using the regional Agile
+multipliers and 16:00–19:00 London peak additions, including VAT and the flat
+3.5p/kWh reduction from 1 April 2026. Converted predictions are capped at 100p.
+This is a regional translation, not independently validated regional models.
+The historical accuracy results remain specific to G.
+
+Collection fetches current published rates directly for all 14 regions. A
+comparison against overlapping uncapped G rates checks the conversion every
+run (0.025p rounding tolerance); a mismatch stops publication for investigation.
+September 2026 API verification confirmed West Midlands uses the same prices
+as G, and Yorkshire's multiplier is 2.0. We therefore do not copy AgilePredict's
+regional constants. Official pricing references are in `regions.py`.
+
+Regional rate snapshots remain private inside snapshot metadata; only the
+website's displayed price window is exported. The public JSON includes aligned
+regional price arrays. The browser remembers the region locally and recalculates
+charts and cheapest periods without contacting a provider. Older snapshots with
+no regional rates safely retain only G.

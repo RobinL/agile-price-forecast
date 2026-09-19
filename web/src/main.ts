@@ -2,6 +2,7 @@ import embed, { type Result } from "vega-embed";
 import { chartSpec, priceDomain, PRICE_COLOURS } from "./chart";
 import { cheapestPeriods, type CheapPeriod } from "./cheap-periods";
 import {
+  forRegion,
   chartDays,
   dayTitle,
   londonDay,
@@ -22,12 +23,6 @@ let current: Forecast | undefined;
 let currentLoadedAt: Date | undefined;
 let renderVersion = 0;
 const byId = (id: string) => document.getElementById(id)!;
-const formatDate = (value: string) =>
-  new Intl.DateTimeFormat("en-GB", {
-    dateStyle: "medium",
-    timeStyle: "short",
-    timeZone: "Europe/London",
-  }).format(new Date(value));
 function element(tag: string, className: string, text = "") {
   const node = document.createElement(tag);
   node.className = className;
@@ -54,11 +49,27 @@ function updateNotice(f: Forecast) {
       : f.mode === "replay"
         ? "Saved historical example"
         : "";
+  const minutes = Math.max(0, Math.floor(ageHours * 60));
+  const ago =
+    minutes < 1
+      ? "just now"
+      : minutes < 60
+        ? `${minutes}m ago`
+        : ageHours < 24
+          ? `${Math.floor(ageHours)}h ago`
+          : `${Math.floor(ageHours / 24)}d ago`;
+  const time = element("time", "issue-time", `issued ${ago}`);
+  time.setAttribute("datetime", f.issued_at);
+  time.title =
+    new Date(f.issued_at).toLocaleString("en-GB", {
+      timeZone: "Europe/London",
+    }) + " London";
   notice.replaceChildren(
-    element("strong", "notice-label", label),
-    document.createTextNode(description ? ` · ${description} · ` : " · "),
-    element("time", "issue-time", `Issued ${formatDate(f.issued_at)} London`),
+    element("span", "notice-label", label),
+    document.createTextNode(" "),
+    time,
   );
+  if (description) notice.append(document.createTextNode(` · ${description}`));
 }
 
 function showPeriods(
@@ -141,6 +152,7 @@ async function render(f: Forecast, loadedAt: Date) {
   views.forEach((view) => view.finalize());
   views.length = 0;
   updateNotice(f);
+  f = forRegion(f, (byId("region") as HTMLSelectElement).value);
   const reference = londonDay(
     f.mode === "live" ? loadedAt : new Date(f.issued_at),
   );
@@ -231,6 +243,25 @@ async function load() {
     if (!response.ok)
       throw new Error("The forecast file is not available yet.");
     const next = parseForecast(await response.json());
+    const select = byId("region") as HTMLSelectElement;
+    let selected = select.value;
+    if (!current) {
+      try {
+        selected = localStorage.getItem("agile-region") ?? "G";
+      } catch {}
+    }
+    select.replaceChildren(
+      ...Object.entries(
+        next.regions ?? { G: { name: "North West England" } },
+      ).map(([code, region]) => {
+        const option = document.createElement("option");
+        option.value = code;
+        option.textContent = region.name;
+        return option;
+      }),
+    );
+    select.value = next.regions?.[selected] ? selected : "G";
+    select.disabled = select.options.length < 2;
     current = next;
     currentLoadedAt = loadedAt;
     await render(next, loadedAt);
@@ -240,6 +271,16 @@ async function load() {
       `${error instanceof Error ? error.message : "Unable to load forecast."} Please try again later.`;
   }
 }
+
+byId("region").addEventListener("change", () => {
+  try {
+    localStorage.setItem(
+      "agile-region",
+      (byId("region") as HTMLSelectElement).value,
+    );
+  } catch {}
+  if (current && currentLoadedAt) void render(current, currentLoadedAt);
+});
 
 const gradient = element("div", "price-gradient");
 const firstPrice = PRICE_COLOURS[0].price;

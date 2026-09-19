@@ -388,6 +388,43 @@
           "type": "boolean"
         }
       }
+    },
+    "regions": {
+      "type": "object",
+      "propertyNames": {
+        "enum": [
+          "A",
+          "B",
+          "C",
+          "D",
+          "E",
+          "F",
+          "G",
+          "H",
+          "J",
+          "K",
+          "L",
+          "M",
+          "N",
+          "P"
+        ]
+      },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "prices"],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "prices": {
+            "type": "array",
+            "items": {
+              "type": ["number", "null"]
+            }
+          }
+        }
+      }
     }
   }
 }

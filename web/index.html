@@ -59,7 +59,17 @@
       <section class="intro">
         <h1>Agile price forecast (beta)</h1>
       </section>
-      <div id="notice" class="notice" role="status">Loading the forecast…</div>
+      <div class="forecast-bar">
+        <div id="notice" class="notice" role="status">
+          Loading the forecast…
+        </div>
+        <label class="region-field"
+          >Select region:
+          <select id="region" aria-label="Select region" disabled>
+            <option value="G">North West England</option>
+          </select>
+        </label>
+      </div>
       <section class="period-controls" aria-label="Cheapest period highlights">
         <div class="period-fields">
           <label class="highlight-toggle"

@@ -326,3 +326,46 @@ select:focus-visible {
   white-space: nowrap;
   pointer-events: none;
 }
+
+.forecast-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 16px;
+  flex-wrap: wrap;
+  background: #e8ede3;
+  padding: 6px 12px;
+  font-size: 11px;
+}
+.forecast-bar .notice {
+  padding: 0;
+  white-space: normal;
+}
+.region-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+.region-field select {
+  font: inherit;
+  color: inherit;
+  max-width: 185px;
+  min-height: 32px;
+  border: 1px solid #cbd3c5;
+  border-radius: 4px;
+  background: #fff;
+  padding: 3px 5px;
+}
+@media (max-width: 600px) {
+  .forecast-bar {
+    padding: 6px 8px;
+    column-gap: 8px;
+  }
+  .region-field {
+    gap: 4px;
+  }
+  .region-field select {
+    max-width: 140px;
+  }
+}

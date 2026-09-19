@@ -4,7 +4,7 @@ import jsonschema
 import numpy as np
 import pandas as pd
 
-from . import archive, ensemble, model_store
+from . import archive, ensemble, model_store, regions
 from .features import future_intervals
 from .model import INPUTS, predict
 from .storage import ROOT, load_snapshot, read_json, read_table, save_json
@@ -128,6 +128,7 @@ def build(model, inputs, prices, metadata, accuracy=None, predictions=None, bias
         "accuracy": accuracy if metadata["mode"] != "demo" else None,
         "calibration": bias,
         "slots": slots,
+        "regions": regions.forecasts(slots, metadata.get("regional_prices", {})),
     }
 
 

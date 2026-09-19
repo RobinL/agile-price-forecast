@@ -40,7 +40,8 @@ export type Forecast = {
   issued_at: string;
   generated_at: string;
   timezone: "Europe/London";
-  region: "G";
+  region: string;
+  regions?: Record<string, { name: string; prices: (number | null)[] }>;
   unit: string;
   horizon_hours: 168;
   horizon_end: string;
@@ -85,6 +86,19 @@ export function parseForecast(value: unknown): Forecast {
     throw new Error(
       "The forecast file is missing or uses an unsupported format.",
     );
+  }
+  if (
+    f.regions &&
+    Object.entries(f.regions).some(
+      ([code, region]) =>
+        !/^[A-HJ-NP]$/.test(code) ||
+        typeof region.name !== "string" ||
+        !Array.isArray(region.prices) ||
+        region.prices.length !== f.slots.length ||
+        region.prices.some((p) => p !== null && !Number.isFinite(p)),
+    )
+  ) {
+    throw new Error("Invalid regional prices.");
   }
   for (const s of f.slots) {
     if (
@@ -189,5 +203,23 @@ export function londonTime(date: Date): { minute: number; label: string } {
       Number(value("minute")) +
       Number(value("second")) / 60,
     label: `Now ${value("hour")}:${value("minute")}`,
+  };
+}
+
+export function forRegion(f: Forecast, code: string): Forecast {
+  const regional = f.regions?.[code];
+  if (!regional || code === "G") return f;
+  return {
+    ...f,
+    region: code,
+    accuracy: null,
+    calibration: null,
+    slots: f.slots.map((slot, i) => ({
+      ...slot,
+      price: regional.prices[i],
+      ...(regional.prices[i] === null
+        ? { status: "unavailable" as const, policy: "unavailable" as const }
+        : {}),
+    })),
   };
 }

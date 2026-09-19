@@ -7,6 +7,7 @@ import pytest
 from agile_forecast.demo import create_demo
 from agile_forecast.feeds import (
     NESO_DOWNLOAD_HOST,
+    MAX_REQUESTS,
     Downloads,
     demand_rows,
     renewable_rows,
@@ -113,7 +114,7 @@ def test_collector_rejects_unexpected_hosts_and_exhausted_budget():
     client = Downloads()
     with pytest.raises(ValueError, match="URL"):
         client.get("test", "https://example.com/file")
-    client.calls = 16
+    client.calls = MAX_REQUESTS
     with pytest.raises(ValueError, match="budget"):
         client.get("test", "https://api.neso.energy/file")
 
