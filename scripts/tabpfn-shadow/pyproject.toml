@@ -1,0 +1,13 @@
+[project]
+name = "agile-tabpfn-shadow"
+version = "0.1.0"
+requires-python = ">=3.12,<3.13"
+dependencies = ["tabpfn==9.0.0", "torch==2.14.0", "numpy==2.5.3", "pandas==2.3.3", "scikit-learn==1.9.0"]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu", marker = "sys_platform == 'linux'" }

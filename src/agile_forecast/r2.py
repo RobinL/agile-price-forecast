@@ -221,7 +221,7 @@ class Store:
             raise ValueError("State bundle exceeds its upload budget.")
         # A single page is deliberate. Unexpected inventory stops work rather
         # than quietly paging through an unbounded bucket.
-        inventory = self.request("list_objects_v2", MaxKeys=100)
+        inventory = self.request("list_objects_v2", Prefix=PREFIX, MaxKeys=100)
         if inventory.get("IsTruncated"):
             raise ValueError("Unexpected bucket inventory; inspect it before writing.")
         objects = inventory.get("Contents", [])

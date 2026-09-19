@@ -1,0 +1,80 @@
+name: TabPFN shadow trial
+
+on:
+  workflow_dispatch:
+    inputs:
+      persist:
+        description: Save the immutable daily shadow result to private R2
+        type: boolean
+        default: false
+  schedule:
+    - cron: "17 17 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tabpfn-shadow
+  cancel-in-progress: false
+
+jobs:
+  shadow:
+    if: >-
+      github.repository == 'RobinL/agile-price-forecast' &&
+      github.ref == format('refs/heads/{0}', github.event.repository.default_branch) &&
+      (github.event_name == 'workflow_dispatch' || vars.TABPFN_SHADOW_ENABLED == 'true')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      TABPFN_DISABLE_TELEMETRY: "1"
+      HF_HUB_OFFLINE: "1"
+      OMP_NUM_THREADS: "2"
+      MPLCONFIGDIR: ${{ github.workspace }}/runtime_state/mpl
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          version: "0.5.25"
+          python-version: "3.12"
+          enable-cache: false
+      - name: Install separate locked environments
+        run: |
+          uv sync --locked --no-dev
+          uv sync --project scripts/tabpfn-shadow --locked --no-dev
+      - name: Restore production state read-only
+        env:
+          R2_ENDPOINT_URL: ${{ vars.R2_ENDPOINT_URL }}
+          R2_BUCKET: ${{ vars.R2_BUCKET }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: uv run --locked --no-dev agile-cloud pull --state-dir runtime_state/shadow-source
+      - name: Prepare paired inputs (no R2 credentials)
+        env:
+          SMOKE_ONLY: ${{ github.event_name == 'workflow_dispatch' && !inputs.persist }}
+        run: |
+          if [ "$SMOKE_ONLY" = "true" ]; then
+            uv run --locked --no-dev python -m agile_forecast.shadow prepare --smoke-latest
+          else
+            uv run --locked --no-dev python -m agile_forecast.shadow prepare
+          fi
+      - name: Download pinned official checkpoint (no R2 credentials)
+        run: |
+          curl --fail --location --retry 2 --max-time 180 --output runtime_state/tabpfn.ckpt https://huggingface.co/Prior-Labs/TabPFN-v2-reg/resolve/4972a65a1b30806315c6f92499959ffbfc69a673/tabpfn-v2-regressor-v2_default.ckpt
+          echo '2ab5a07d5c41dfe6db9aa7ae106fc6de898326c2765be66505a07e2868c10736  runtime_state/tabpfn.ckpt' | sha256sum --check
+      - name: Run local CPU inference (no R2 credentials)
+        run: |
+          scripts/tabpfn-shadow/.venv/bin/python scripts/tabpfn-shadow/predict.py runtime_state/shadow runtime_state/tabpfn.ckpt
+          uv run --locked --no-dev python -m agile_forecast.shadow validate
+      - name: Save only shadow results
+        if: github.event_name == 'schedule' || inputs.persist
+        env:
+          R2_ENDPOINT_URL: ${{ vars.R2_ENDPOINT_URL }}
+          R2_BUCKET: ${{ vars.R2_BUCKET }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: uv run --locked --no-dev python -m agile_forecast.shadow upload
+      - name: Summary
+        run: |
+          echo 'Built with PriorLabs-TabPFN. Daily 48–72h shadow comparison completed. No website publication or production state write.' >> "$GITHUB_STEP_SUMMARY"

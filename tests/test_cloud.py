@@ -45,12 +45,13 @@ class FakeS3:
         self.objects[Key] = (data, etag)
         return {"ETag": etag}
 
-    def list_objects_v2(self, Bucket, MaxKeys):
+    def list_objects_v2(self, Bucket, MaxKeys, Prefix=""):
+        objects = {k: v for k, v in self.objects.items() if k.startswith(Prefix)}
         return {
-            "IsTruncated": len(self.objects) > MaxKeys,
-            "Contents": [
-                {"Key": k, "Size": len(v[0])} for k, v in self.objects.items()
-            ][:MaxKeys],
+            "IsTruncated": len(objects) > MaxKeys,
+            "Contents": [{"Key": k, "Size": len(v[0])} for k, v in objects.items()][
+                :MaxKeys
+            ],
         }
 
     def delete_object(self, Bucket, Key):
