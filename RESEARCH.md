@@ -42,3 +42,9 @@ website's displayed price window is exported. The public JSON includes aligned
 regional price arrays. The browser remembers the region locally and recalculates
 charts and cheapest periods without contacting a provider. Older snapshots with
 no regional rates safely retain only G.
+
+NESO's rolling 2–14-day cardinal feed can drop tomorrow when its window advances.
+Collection fills only missing demand-profile slots from previously observed live
+snapshots for the same target time, newest first. Source issue/availability clocks
+are preserved, and the existing 120-hour input age limit still applies. It does
+not substitute another day's demand or overwrite a new available forecast.

@@ -216,6 +216,52 @@ def attach_previous_wind(state, frame, as_of):
     return f
 
 
+def retain_demand_profiles(state, frame, as_of):
+    """Fill gaps when NESO's 2–14-day window advances past near-term targets.
+
+    Reuse only previously observed forecasts for the identical settlement slot.
+    Keep source clocks: collecting again must not make an older input fresh.
+    """
+    f = frame.copy()
+    columns = [
+        "demand_hh",
+        "demand_hh_ramp",
+        "profile_peak",
+        "profile_min",
+        "profile_range",
+        "profile_mean",
+        "profile_available_at",
+        "profile_issue_at",
+    ]
+    candidates = []
+    for path in (state / "snapshots").glob("*/metadata.json"):
+        metadata = read_json(path)
+        cutoff = pd.Timestamp(metadata["as_of"])
+        if (
+            metadata["mode"] == "live"
+            and as_of - pd.Timedelta(hours=120) <= cutoff <= as_of
+            and (path.parent / "features.csv").is_file()
+        ):
+            candidates.append((cutoff, path.parent))
+    for _, folder in sorted(candidates, reverse=True):
+        if f.demand_hh.notna().all():
+            break
+        old = read_table(folder / "features.csv")
+        if not set(columns).issubset(old.columns):
+            continue
+        old = old.set_index("target_start").reindex(f.target_start)
+        old.index = f.index
+        good = (
+            f.demand_hh.isna()
+            & old.demand_hh.gt(0)
+            & old.profile_available_at.le(as_of)
+            & old.profile_issue_at.le(as_of)
+            & old.profile_issue_at.ge(as_of - pd.Timedelta(hours=120))
+        )
+        f.loc[good, columns] = old.loc[good, columns]
+    return f
+
+
 def collect(state, product=PRODUCT):
     client = Downloads()
     wind_url = current_resource(
@@ -323,6 +369,7 @@ def collect(state, product=PRODUCT):
         pd.Timestamp(profile_record["retrieved_at"]),
         source_clock(profile_record),
     )
+    f = retain_demand_profiles(state, f, as_of)
     f = f.merge(
         renewables.rename(columns={"wind_mw": "emb_wind", "solar_mw": "solar"}),
         on="target_start",
@@ -376,6 +423,7 @@ def collect(state, product=PRODUCT):
     )
     inputs["issued_at"], inputs["inputs_available_at"] = as_of, as_of
     notes = [
+        "Near-term demand profiles omitted by the latest 2–14-day feed may reuse a previously collected forecast for the same interval, retaining its original source timestamp and 120-hour age limit.",
         "Seven-day experimental forecast. The selected research adjustment applies only to a complete unknown 48–72h window; other horizons use the underlying ensemble.",
         "Demand is reconstructed from current NESO cardinal points using the same interpolation as historical training. Live collection times are observed; file modification times substitute for absent provider run timestamps.",
         "Historical research used daily 16:30 London issues. Other issue times and horizons beyond 72h do not inherit its accuracy claims.",
