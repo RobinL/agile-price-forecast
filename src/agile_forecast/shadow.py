@@ -73,7 +73,71 @@ PROTOCOL = {
 
 
 def records(f):
-    return json.loads(f.to_json(orient="records", date_format="iso"))
+    return [
+        {
+            k: (
+                v.isoformat()
+                if isinstance(v, pd.Timestamp)
+                else None
+                if pd.isna(v)
+                else v
+            )
+            for k, v in row.items()
+        }
+        for row in f.to_dict(orient="records")
+    ]
+
+
+def price_features(frame, prices):
+    """Rebuild the research price features using only delivered, then-known prices."""
+    result = frame.copy()
+    for cutoff, indices in result.groupby("cutoff").groups.items():
+        h = (
+            prices[
+                (prices.price_available_at <= cutoff) & (prices.target_end <= cutoff)
+            ]
+            .sort_values("price_available_at")
+            .drop_duplicates("target_start", keep="last")
+            .copy()
+        )
+        h["local_day"] = (
+            h.target_start.dt.tz_convert("Europe/London")
+            .dt.tz_localize(None)
+            .dt.normalize()
+        )
+        midnight = cutoff.tz_convert("Europe/London").tz_localize(None).normalize()
+        days = h[
+            (h.local_day < midnight) & (h.local_day >= midnight - pd.Timedelta(days=14))
+        ]
+        last = days[days.local_day == midnight - pd.Timedelta(days=1)].price.mean()
+        values = {
+            "last_day_mean": last,
+            "level_3d": days[
+                days.local_day >= midnight - pd.Timedelta(days=3)
+            ].price.mean(),
+            "level_14d": days.price.mean(),
+            "level_change_1d": last
+            - days[days.local_day == midnight - pd.Timedelta(days=2)].price.mean(),
+            "level_change_7d": last
+            - days[days.local_day == midnight - pd.Timedelta(days=8)].price.mean(),
+            "recent_volatility": h[
+                h.target_end > cutoff - pd.Timedelta(days=7)
+            ].price.std(),
+        }
+        for key, value in values.items():
+            result.loc[indices, key] = value
+        lookup = h.groupby(
+            h.target_start.dt.tz_convert("Europe/London").dt.strftime("%Y-%m-%d %H:%M")
+        ).price.mean()
+        local = (
+            result.loc[indices, "target_start"]
+            .dt.tz_convert("Europe/London")
+            .dt.tz_localize(None)
+        )
+        for lag in [7, 14]:
+            keys = (local - pd.Timedelta(days=lag)).dt.strftime("%Y-%m-%d %H:%M")
+            result.loc[indices, f"lag_{lag}"] = lookup.reindex(keys).to_numpy()
+    return result
 
 
 def prepare(state, output, now=None, smoke=False):
@@ -144,6 +208,9 @@ def prepare(state, output, now=None, smoke=False):
         raise ValueError("Comparison requires unknown prices at issue.")
     if now >= target.target_start.min():
         raise ValueError("Cannot record a retrospective shadow forecast.")
+    prices = archive.read_months(state, "prices")
+    f = price_features(f, prices)
+    target = price_features(target, prices)
     cols = ["cutoff", "target_start", "target_end"] + FEATURES
     payload = {
         "protocol": PROTOCOL,

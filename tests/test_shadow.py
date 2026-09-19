@@ -112,7 +112,9 @@ def test_prepare_excludes_unmatured_labels_and_preserves_baseline(
         archive,
         "read_months",
         lambda _state, table: (
-            pd.concat([historic, target]) if table == "features" else production
+            pd.concat([historic, target])
+            if table == "features"
+            else (historic if table == "prices" else production)
         ),
     )
     monkeypatch.setattr(archive, "history_as_of", lambda _state, at: historic.copy())
@@ -130,3 +132,31 @@ def test_prepare_excludes_unmatured_labels_and_preserves_baseline(
     assert all(pd.Timestamp(r["target_end"]) <= cutoff for r in data["context"])
     assert all(r["current"] == 10 for r in data["target"])
     assert np.isfinite([r["price"] for r in data["context"]]).all()
+
+
+def test_serialization_preserves_feature_precision():
+    value = 1.2345678901234567
+    frame = pd.DataFrame({"x": [value, float("nan")]})
+    rows = json.loads(json.dumps(shadow.records(frame), allow_nan=False))
+    assert rows == [{"x": value}, {"x": None}]
+
+
+def test_price_features_ignore_future_prices():
+    cutoff = pd.Timestamp("2026-09-19T15:30:00Z")
+    starts = pd.date_range(
+        cutoff - pd.Timedelta(days=15), periods=15 * 48 + 2, freq="30min"
+    )
+    prices = pd.DataFrame(
+        {
+            "target_start": starts,
+            "target_end": starts + pd.Timedelta(minutes=30),
+            "price_available_at": starts + pd.Timedelta(minutes=30),
+            "price": 10.0,
+        }
+    )
+    target = pd.DataFrame(
+        {"cutoff": [cutoff], "target_start": [cutoff + pd.Timedelta(days=2)]}
+    )
+    before = shadow.price_features(target, prices)
+    prices.loc[prices.target_end > cutoff, "price"] = 1e9
+    pd.testing.assert_frame_equal(before, shadow.price_features(target, prices))

@@ -10,6 +10,8 @@ from pathlib import Path
 
 os.environ["TABPFN_DISABLE_TELEMETRY"] = "1"
 os.environ["HF_HUB_OFFLINE"] = "1"
+os.environ.setdefault("SKB_DATA_DIRECTORY", str(Path("runtime_state/skrub").resolve()))
+os.environ.setdefault("MPLCONFIGDIR", str(Path("runtime_state/mpl").resolve()))
 import numpy as np
 import pandas as pd
 import torch
