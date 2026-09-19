@@ -319,24 +319,26 @@ export function chartSpec(
               data: { values: [now] },
               mark: {
                 type: "rule" as const,
-                color: "#73816e",
-                strokeWidth: 1.5,
+                color: "#e7e9e0",
+                strokeWidth: 1,
+              },
+              encoding: {
+                y: { value: 24 },
+                y2: { value: { expr: "height" } },
               },
             },
             {
+              name: "current_time_label",
               data: { values: [now] },
               mark: {
                 type: "text" as const,
-                align:
-                  now.minute > 1200 ? ("right" as const) : ("left" as const),
-                baseline: "top" as const,
-                dx: now.minute > 1200 ? -5 : 5,
-                dy: 1,
-                color: "#53654c",
+                align: "center" as const,
+                baseline: "bottom" as const,
+                color: "#737871",
                 font: "system-ui",
                 fontSize: 11,
               },
-              encoding: { y: { value: 0 }, text: { field: "label" } },
+              encoding: { y: { value: 20 }, text: { field: "label" } },
             },
           ]
         : []),
