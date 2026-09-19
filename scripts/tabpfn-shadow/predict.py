@@ -53,6 +53,7 @@ def main():
     raw = np.minimum(
         model.predict(target[cols].to_numpy(dtype=float), output_type="median"), 100
     )
+    raw = raw.astype(np.float64)
     base = target.current.to_numpy(dtype=float)
     assert len(raw) == 48 and np.isfinite(raw).all() and np.isfinite(base).all()
     shift = float(0.5 * (raw.mean() - base.mean()))
