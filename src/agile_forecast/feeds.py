@@ -13,8 +13,8 @@ from urllib.parse import urljoin, urlparse
 import pandas as pd
 import requests
 
-from .regions import REGIONS, convert
 from .features import OPMR, attach_profiles, engineer, future_intervals
+from .regions import REGIONS, convert
 from .storage import read_json, read_table, save_snapshot
 
 CATALOGUE = "https://api.neso.energy/api/3/action/datapackage_show"
@@ -350,14 +350,14 @@ def collect(state, product=PRODUCT):
         }
         for row in prices.itertuples():
             actual = rates.get(row.target_start.isoformat())
-            if actual is not None and row.price_p_kwh < 95 and actual < 95:
-                if (
-                    abs(convert(row.price_p_kwh, row.target_start, code) - actual)
-                    > 0.025
-                ):
-                    raise ValueError(
-                        f"Regional formula no longer matches Octopus: {code}"
-                    )
+            if (
+                actual is not None
+                and row.price_p_kwh < 95
+                and actual < 95
+                and abs(convert(row.price_p_kwh, row.target_start, code) - actual)
+                > 0.025
+            ):
+                raise ValueError(f"Regional formula no longer matches Octopus: {code}")
         regional_prices[code] = rates
     as_of = pd.Timestamp.now(tz="UTC")
     f = pd.DataFrame({"target_start": future_intervals(as_of)})

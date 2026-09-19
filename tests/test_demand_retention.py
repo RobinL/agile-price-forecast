@@ -1,4 +1,5 @@
 import pandas as pd
+
 from agile_forecast.feeds import retain_demand_profiles
 from agile_forecast.storage import save_json
 

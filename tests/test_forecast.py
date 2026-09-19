@@ -6,8 +6,8 @@ import pytest
 
 from agile_forecast.demo import create_demo
 from agile_forecast.feeds import (
-    NESO_DOWNLOAD_HOST,
     MAX_REQUESTS,
+    NESO_DOWNLOAD_HOST,
     Downloads,
     demand_rows,
     renewable_rows,
