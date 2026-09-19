@@ -122,6 +122,13 @@ export function chartSpec(
     ? [{ minute: Math.max(...published.map((bar) => bar.end_minute)) }]
     : [];
   const highlights = highlightRegions(slots, periods);
+  const bracketY = highlights.length ? -19 : -8;
+  // Opaque badge fills match each translucent highlight on #fffefa. Using
+  // opacity on the circle would darken its lower half over the highlight.
+  const badgeColours = [1, 2, 3, 4, 5].map((rank) => {
+    const alpha = 0.55 - ((rank - 1) * (0.55 - 0.04)) / 4;
+    return `rgb(255, ${Math.round(231 * alpha + 254 * (1 - alpha))}, ${Math.round(122 * alpha + 250 * (1 - alpha))})`;
+  });
   const edges = highlights.flatMap((region) => [
     { minute: region.minute, label: region.label },
     { minute: region.end_minute, label: region.label },
@@ -158,14 +165,21 @@ export function chartSpec(
     },
     layer: [
       {
-        name: "published_background",
+        name: "published_bracket",
         data: { values: published },
-        mark: { type: "rect", color: "#eeeeec", clip: true },
-        encoding: {
-          x2: { field: "end_minute" },
-          y: { value: 0 },
-          y2: { value: { expr: "height" } },
+        mark: { type: "rule", color: "#999d95", strokeWidth: 1 },
+        encoding: { x2: { field: "end_minute" }, y: { value: bracketY } },
+      },
+      {
+        name: "published_bracket_ends",
+        data: {
+          values: published.flatMap((p) => [
+            { minute: p.minute },
+            { minute: p.end_minute },
+          ]),
         },
+        mark: { type: "rule", color: "#999d95", strokeWidth: 1 },
+        encoding: { y: { value: bracketY }, y2: { value: bracketY + 8 } },
       },
       {
         name: "cheap_periods",
@@ -246,13 +260,19 @@ export function chartSpec(
           size: 400,
           color: "#ffe77a",
           opacity: 1,
-          stroke: "#e4cc5c",
-          strokeWidth: 1,
+          stroke: null,
+          strokeWidth: 0,
         },
         encoding: {
           x: { field: "midpoint", type: "quantitative" },
-          // Radius 10 plus the half-pixel border: the bottom touches y = 0.
-          y: { value: -10.5 },
+          // Centre the circle on the top of its highlighted region.
+          y: { value: 0 },
+          fill: {
+            field: "rank",
+            type: "ordinal",
+            scale: { domain: [1, 2, 3, 4, 5], range: badgeColours },
+            legend: null,
+          },
           tooltip: [{ field: "label", title: "Selected period" }],
         },
       },
@@ -269,7 +289,7 @@ export function chartSpec(
         },
         encoding: {
           x: { field: "midpoint", type: "quantitative" },
-          y: { value: -10.5 },
+          y: { value: 0 },
           text: { field: "rank" },
           tooltip: [{ field: "label", title: "Selected period" }],
         },
@@ -288,7 +308,7 @@ export function chartSpec(
         },
         encoding: {
           x: { value: { expr: "clamp(scale('x', datum.minute), 110, width)" } },
-          y: { value: highlights.length ? -30 : -8 },
+          y: { value: bracketY - 5 },
         },
       },
       // Captured once at page load/refresh, never from the forecast issue time.
@@ -335,7 +355,7 @@ export function chartSpec(
         domain: false,
         tickColor: "#cbd1c6",
         gridColor: "#e7e9e0",
-        gridDash: [3, 3],
+        gridDash: [],
       },
     },
   };
