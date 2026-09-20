@@ -1,3 +1,8 @@
+import {
+  fetchPublishedPrices,
+  withPublishedPrices,
+  type Rates,
+} from "./published-prices";
 import embed, { type Result } from "vega-embed";
 import { chartSpec, priceDomain, PRICE_COLOURS } from "./chart";
 import { cheapestPeriods, type CheapPeriod } from "./cheap-periods";
@@ -24,6 +29,37 @@ const scrubberCleanups: (() => void)[] = [];
 let current: Forecast | undefined;
 let currentLoadedAt: Date | undefined;
 let renderVersion = 0;
+const published = new Map<string, Rates>();
+const checked = new Map<string, number>();
+const pendingPrices = new Set<string>();
+async function refreshPublished() {
+  if (current?.mode !== "live" || document.visibilityState !== "visible")
+    return;
+  const region = (byId("region") as HTMLSelectElement).value;
+  if (
+    pendingPrices.has(region) ||
+    Date.now() - (checked.get(region) ?? 0) < 5 * 60 * 1000
+  )
+    return;
+  pendingPrices.add(region);
+  checked.set(region, Date.now());
+  try {
+    const rates = await fetchPublishedPrices(region);
+    const saved = published.get(region) ?? new Map<number, number>();
+    for (const [time, price] of rates) saved.set(time, price);
+    published.set(region, saved);
+    if (
+      current &&
+      currentLoadedAt &&
+      (byId("region") as HTMLSelectElement).value === region
+    )
+      await render(current, currentLoadedAt);
+  } catch {
+    // Keep saved prices and estimates; never erase them on an API failure.
+  } finally {
+    pendingPrices.delete(region);
+  }
+}
 const byId = (id: string) => document.getElementById(id)!;
 function element(tag: string, className: string, text = "") {
   const node = document.createElement(tag);
@@ -154,7 +190,8 @@ async function render(f: Forecast, loadedAt: Date) {
   views.forEach((view) => view.finalize());
   views.length = 0;
   updateNotice(f);
-  f = forRegion(f, (byId("region") as HTMLSelectElement).value);
+  const region = (byId("region") as HTMLSelectElement).value;
+  f = withPublishedPrices(forRegion(f, region), published.get(region));
   const reference = londonDay(
     f.mode === "live" ? loadedAt : new Date(f.issued_at),
   );
@@ -241,6 +278,7 @@ async function load() {
   try {
     const response = await fetch(
       `${import.meta.env.BASE_URL}data/forecast.json`,
+      { cache: "no-cache" },
     );
     if (!response.ok)
       throw new Error("The forecast file is not available yet.");
@@ -267,6 +305,7 @@ async function load() {
     current = next;
     currentLoadedAt = loadedAt;
     await render(next, loadedAt);
+    void refreshPublished();
   } catch (error) {
     byId("notice").className = "notice caution";
     byId("notice").textContent =
@@ -282,6 +321,7 @@ byId("region").addEventListener("change", () => {
     );
   } catch {}
   if (current && currentLoadedAt) void render(current, currentLoadedAt);
+  void refreshPublished();
 });
 
 const gradient = element("div", "price-gradient");
@@ -315,3 +355,11 @@ setInterval(
   },
   10 * 60 * 1000,
 );
+
+setInterval(() => void refreshPublished(), 5 * 60 * 1000);
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") {
+    void refreshPublished();
+    if (current?.mode === "live") void load();
+  }
+});

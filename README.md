@@ -38,3 +38,9 @@ Our original code and documentation use the [MIT licence](LICENSE). AgilePredict
 - [Research background](RESEARCH.md)
 - [Local development commands](Makefile)
 - [Social previews and analytics](SOCIAL_SHARING.md)
+
+Published prices refresh independently in the browser from Octopus's public API
+on opening, changing region, and every five minutes while the page is visible.
+Returning to the page also checks for updates (at most once per region per five
+minutes). This uses no API key or private infrastructure. API failures retain the
+saved prices and forecasts; the forecast issue time still describes the model run.
