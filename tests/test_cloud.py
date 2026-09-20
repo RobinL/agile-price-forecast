@@ -248,6 +248,8 @@ def test_public_artifact_rejects_private_files_and_demo_for_live_deployment(tmp_
     (tmp_path / "preview.png").write_bytes((ROOT / "web/preview.png").read_bytes())
     with pytest.raises(ValueError, match="incomplete"):
         production.check_site(tmp_path)
+    for path in (ROOT / "web/pwa").iterdir():
+        (tmp_path / path.name).write_bytes(path.read_bytes())
     notices = tmp_path / "third-party-licences.txt"
     notices.write_text("")
     with pytest.raises(ValueError, match="licence notices"):

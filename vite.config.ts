@@ -15,6 +15,13 @@ const publicFiles = resolve(
       : "fixtures/site",
 );
 
+const pwaFiles = [
+  "manifest.webmanifest",
+  "icon-192.png",
+  "icon-512.png",
+  "icon-maskable-512.png",
+];
+
 export default defineConfig({
   root: "web",
   base: "./",
@@ -22,7 +29,24 @@ export default defineConfig({
   plugins: [
     {
       name: "social-preview",
+      configureServer(server) {
+        server.middlewares.use((req, res, next) => {
+          const name = (req.url ?? "").split("?")[0].replace(/^\//, "");
+          if (!pwaFiles.includes(name)) return next();
+          res.setHeader(
+            "Content-Type",
+            name.endsWith(".png") ? "image/png" : "application/manifest+json",
+          );
+          res.end(readFileSync(resolve("web/pwa", name)));
+        });
+      },
       generateBundle() {
+        for (const name of pwaFiles)
+          this.emitFile({
+            type: "asset",
+            fileName: name,
+            source: readFileSync(resolve("web/pwa", name)),
+          });
         // One reviewed public screenshot; never copy the private state directory.
         this.emitFile({
           type: "asset",

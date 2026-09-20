@@ -295,6 +295,10 @@ def check_site(directory, live=False):
         "data/forecast.json",
         "third-party-licences.txt",
         "preview.png",
+        "manifest.webmanifest",
+        "icon-192.png",
+        "icon-512.png",
+        "icon-maskable-512.png",
     }
     for path in directory.rglob("*"):
         if path.is_symlink():

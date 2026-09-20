@@ -12,9 +12,11 @@ import {
 } from "./data";
 import "./style.css";
 import { attachPriceScrubber } from "./price-scrubber";
+import { setupInstall } from "./install";
 import { setupAnalytics } from "./analytics";
 
 setupAnalytics();
+setupInstall();
 
 const compactLayout = window.matchMedia("(max-width: 600px)");
 const views: Result[] = [];

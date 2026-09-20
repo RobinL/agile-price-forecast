@@ -371,3 +371,16 @@ select:focus-visible {
     max-width: 140px;
   }
 }
+
+.install-app {
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 1px solid currentColor;
+  border-radius: 6px;
+  padding: 0.35em 0.7em;
+  cursor: pointer;
+}
+.install-app[hidden] {
+  display: none;
+}
