@@ -195,6 +195,7 @@ async function render(f: Forecast, loadedAt: Date) {
   const reference = londonDay(
     f.mode === "live" ? loadedAt : new Date(f.issued_at),
   );
+  const normalise = (byId("normalise-prices") as HTMLInputElement).checked;
   const domain = priceDomain(f.slots);
   const days = chartDays(f.slots);
   const enabled = (byId("highlight-enabled") as HTMLInputElement).checked;
@@ -250,12 +251,13 @@ async function render(f: Forecast, loadedAt: Date) {
       chart,
       chartSpec(
         slots,
-        domain,
+        normalise ? domain : priceDomain(slots, true),
         f.mode === "live" && day === londonDay(loadedAt)
           ? londonTime(loadedAt)
           : undefined,
         periods,
         compactLayout.matches,
+        !normalise,
       ),
       {
         actions: false,
@@ -336,7 +338,12 @@ colourLabels.append(
   ...PRICE_COLOURS.map((stop) => element("span", "", stop.label)),
 );
 byId("price-legend").replaceChildren(gradient, colourLabels);
-for (const id of ["highlight-enabled", "period-count", "period-hours"]) {
+for (const id of [
+  "highlight-enabled",
+  "normalise-prices",
+  "period-count",
+  "period-hours",
+]) {
   byId(id).addEventListener("change", () => {
     if (current && currentLoadedAt) void render(current, currentLoadedAt);
   });

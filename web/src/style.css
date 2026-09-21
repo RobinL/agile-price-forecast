@@ -126,7 +126,7 @@ h1 {
 .highlight-toggle {
   font-weight: 400;
   min-height: 28px;
-  margin-right: auto;
+  margin-right: 0;
 }
 .period-fields input {
   accent-color: #6c7d44;
@@ -266,7 +266,7 @@ select:focus-visible {
     gap: 6px 12px;
   }
   .highlight-toggle {
-    grid-column: 1 / -1;
+    grid-column: auto;
   }
   .period-fields label {
     white-space: nowrap;
@@ -383,4 +383,20 @@ select:focus-visible {
 }
 .install-app[hidden] {
   display: none;
+}
+
+.normalise-toggle {
+  min-height: 28px;
+  margin-right: auto;
+}
+
+@media (max-width: 600px) {
+  .period-fields {
+    column-gap: 10px;
+  }
+  .period-fields .highlight-toggle,
+  .period-fields .normalise-toggle {
+    font-size: 11px;
+    gap: 5px;
+  }
 }

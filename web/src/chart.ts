@@ -92,9 +92,18 @@ export function highlightRegions(slots: Slot[], periods: CheapPeriod[]) {
   });
 }
 
-export function priceDomain(slots: Slot[]): [number, number] {
+export function priceDomain(
+  slots: Slot[],
+  independent = false,
+): [number, number] {
   const values = slots.flatMap((s) => (s.price === null ? [] : [s.price]));
   if (!values.length) return [0, 40];
+  if (independent) {
+    const low = Math.min(...values),
+      high = Math.max(...values);
+    // Give constant-price days a usable scale too; Vega applies D3's nice rounding.
+    return low === high ? [low - 1, high + 1] : [low, high];
+  }
   return [
     Math.floor(Math.min(0, ...values) / 5) * 5,
     Math.ceil((Math.max(5, ...values) + 2) / 5) * 5,
@@ -107,6 +116,7 @@ export function chartSpec(
   now?: { minute: number; label: string },
   periods: CheapPeriod[] = [],
   compact = false,
+  independent = false,
 ): VisualizationSpec {
   const bars = chartBars(slots);
   const published: { minute: number; end_minute: number }[] = [];
@@ -208,7 +218,7 @@ export function chartSpec(
           y: {
             field: "price",
             type: "quantitative",
-            scale: { domain, nice: false, zero: false },
+            scale: { domain, nice: independent ? 4 : false, zero: false },
             axis: {
               title: null,
               labelExpr: compact
