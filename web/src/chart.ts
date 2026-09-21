@@ -10,7 +10,8 @@ export const PRICE_COLOURS = [
   { price: 15, label: "15", color: "#659c65" },
   { price: 25, label: "25", color: "#c3a350" },
   { price: 35, label: "35", color: "#d47b65" },
-  { price: 45, label: "≥45", color: "#b74465" },
+  { price: 45, label: "45", color: "#b74465" },
+  { price: 100, label: "≥100", color: "#000000" },
 ];
 const PRICE_COLOUR_SCALE = {
   type: "linear" as const,

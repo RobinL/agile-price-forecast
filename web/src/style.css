@@ -98,9 +98,19 @@ h1 {
   border-radius: 3px;
 }
 .price-scale-labels {
-  display: flex;
-  justify-content: space-between;
+  position: relative;
+  height: 16px;
   margin-top: 5px;
+}
+.price-scale-labels span {
+  position: absolute;
+  transform: translateX(-50%);
+}
+.price-scale-labels span:first-child {
+  transform: none;
+}
+.price-scale-labels span:last-child {
+  transform: translateX(-100%);
 }
 .period-controls {
   flex-basis: 100%;

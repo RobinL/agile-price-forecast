@@ -335,7 +335,11 @@ gradient.style.backgroundImage = `linear-gradient(to right, ${PRICE_COLOURS.map(
 ).join(", ")})`;
 const colourLabels = element("div", "price-scale-labels");
 colourLabels.append(
-  ...PRICE_COLOURS.map((stop) => element("span", "", stop.label)),
+  ...PRICE_COLOURS.map((stop) => {
+    const label = element("span", "", stop.label);
+    label.style.left = `${(100 * (stop.price - firstPrice)) / (lastPrice - firstPrice)}%`;
+    return label;
+  }),
 );
 byId("price-legend").replaceChildren(gradient, colourLabels);
 for (const id of [
