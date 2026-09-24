@@ -1,0 +1,85 @@
+name: Half-hour demand shadow trial
+
+on:
+  workflow_dispatch:
+    inputs:
+      persist:
+        description: Save the paired comparison privately (otherwise smoke test only)
+        type: boolean
+        default: false
+  workflow_run:
+    workflows: [Refresh forecast]
+    types: [completed]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: demand-shadow
+  cancel-in-progress: false
+
+jobs:
+  shadow:
+    if: >-
+      github.repository == 'RobinL/agile-price-forecast' &&
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'workflow_dispatch' ||
+        (vars.DEMAND_SHADOW_ENABLED == 'true' &&
+         github.event.workflow_run.conclusion == 'success' &&
+         github.event.workflow_run.head_branch == 'main' &&
+         github.event.workflow_run.head_repository.full_name == github.repository &&
+         (github.event.workflow_run.event == 'schedule' ||
+          github.event.workflow_run.event == 'workflow_dispatch')))
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      # Never execute the upstream run's supplied commit or download its artifacts.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          version: "0.5.25"
+          python-version: "3.12"
+          enable-cache: false
+      - name: Install existing locked dependencies
+        run: uv sync --locked --no-dev
+      - name: Restore production state read-only
+        env:
+          R2_ENDPOINT_URL: ${{ vars.R2_ENDPOINT_URL }}
+          R2_BUCKET: ${{ vars.R2_BUCKET }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: uv run --locked --no-dev agile-cloud pull --state-dir runtime_state/demand-source
+      - name: Restore the challenger's past reference predictions
+        id: history
+        env:
+          R2_ENDPOINT_URL: ${{ vars.R2_ENDPOINT_URL }}
+          R2_BUCKET: ${{ vars.R2_BUCKET }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: uv run --locked --no-dev python -m agile_forecast.demand_shadow history
+      - name: Fit and compare (no R2 credentials)
+        if: steps.history.outputs.exists != 'true' || github.event_name == 'workflow_dispatch'
+        env:
+          SMOKE_ONLY: ${{ github.event_name == 'workflow_dispatch' && !inputs.persist }}
+        run: |
+          if [ "$SMOKE_ONLY" = "true" ]; then
+            uv run --locked --no-dev python -m agile_forecast.demand_shadow prepare --smoke
+          else
+            uv run --locked --no-dev python -m agile_forecast.demand_shadow prepare
+          fi
+      - name: Save only the private comparison
+        if: >-
+          steps.history.outputs.exists != 'true' &&
+          (github.event_name == 'workflow_run' || inputs.persist)
+        env:
+          R2_ENDPOINT_URL: ${{ vars.R2_ENDPOINT_URL }}
+          R2_BUCKET: ${{ vars.R2_BUCKET }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: uv run --locked --no-dev python -m agile_forecast.demand_shadow upload
+      - name: Summary
+        run: |
+          echo 'Half-hour demand comparison completed or already recorded. Public forecast and production state unchanged.' >> "$GITHUB_STEP_SUMMARY"
