@@ -2,7 +2,9 @@
 
 Octopus: https://octopus.energy/blog/agile-pricing-explained/
 Multipliers/peak adders: https://docs.octopus.energy/rest/guides/endpoints/
-Current AGILE-24-10-01 rates checked against all 14 regions, September 2026.
+Current AGILE-24-10-01 rates checked against all 14 regions, October 2026.
+Domestic electricity is zero-rated from 1 October 2026 through 31 March 2027:
+https://www.gov.uk/government/publications/temporary-zero-rate-of-vat-for-domestic-electricity-in-great-britain
 Published rates always come directly from the regional API, never conversion.
 """
 
@@ -31,11 +33,24 @@ def convert(price, start, region):
     """Convert an uncapped G prediction, keeping negative rates and London DST."""
     local = pd.Timestamp(start).tz_convert("Europe/London")
     peak = 16 <= local.hour < 19
-    reduction = 3.5 if local >= pd.Timestamp("2026-04-01", tz="Europe/London") else 0
+    vat = (
+        1.0
+        if pd.Timestamp("2026-10-01", tz="Europe/London")
+        <= local
+        < pd.Timestamp("2027-04-01", tz="Europe/London")
+        else 1.05
+    )
+    # The April reduction was quoted including 5% VAT. Its net amount stays
+    # fixed when the VAT rate changes, just like the regional peak additions.
+    reduction = (
+        3.5 / 1.05 * vat
+        if local >= pd.Timestamp("2026-04-01", tz="Europe/London")
+        else 0
+    )
     _, multiplier, adder = REGIONS[region]
-    common = (price + reduction - (12 * 1.05 if peak else 0)) / 2.1
+    common = (price + reduction - (12 * vat if peak else 0)) / 2.1
     return round(
-        min(100, common * multiplier + (adder * 1.05 if peak else 0) - reduction), 3
+        min(100, common * multiplier + (adder * vat if peak else 0) - reduction), 3
     )
 
 

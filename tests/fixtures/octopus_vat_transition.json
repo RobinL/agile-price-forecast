@@ -1,0 +1,338 @@
+[
+  {
+    "region": "A",
+    "start": "2026-09-30T10:00:00Z",
+    "north_west": 17.4405,
+    "regional": 17.4405
+  },
+  {
+    "region": "A",
+    "start": "2026-09-30T15:00:00Z",
+    "north_west": 39.963,
+    "regional": 41.013
+  },
+  {
+    "region": "A",
+    "start": "2026-10-01T10:00:00Z",
+    "north_west": 26.65,
+    "regional": 26.65
+  },
+  {
+    "region": "A",
+    "start": "2026-10-01T15:00:00Z",
+    "north_west": 41.88,
+    "regional": 42.88
+  },
+  {
+    "region": "B",
+    "start": "2026-09-30T10:00:00Z",
+    "north_west": 17.4405,
+    "regional": 16.443
+  },
+  {
+    "region": "B",
+    "start": "2026-09-30T15:00:00Z",
+    "north_west": 39.963,
+    "regional": 40.593
+  },
+  {
+    "region": "B",
+    "start": "2026-10-01T10:00:00Z",
+    "north_west": 26.65,
+    "regional": 25.22
+  },
+  {
+    "region": "B",
+    "start": "2026-10-01T15:00:00Z",
+    "north_west": 41.88,
+    "regional": 42.3
+  },
+  {
+    "region": "C",
+    "start": "2026-09-30T10:00:00Z",
+    "north_west": 17.4405,
+    "regional": 16.443
+  },
+  {
+    "region": "C",
+    "start": "2026-09-30T15:00:00Z",
+    "north_west": 39.963,
+    "regional": 38.493
+  },
+  {
+    "region": "C",
+    "start": "2026-10-01T10:00:00Z",
+    "north_west": 26.65,
+    "regional": 25.22
+  },
+  {
+    "region": "C",
+    "start": "2026-10-01T15:00:00Z",
+    "north_west": 41.88,
+    "regional": 40.3
+  },
+  {
+    "region": "D",
+    "start": "2026-09-30T10:00:00Z",
+    "north_west": 17.4405,
+    "regional": 18.438
+  },
+  {
+    "region": "D",
+    "start": "2026-09-30T15:00:00Z",
+    "north_west": 39.963,
+    "regional": 42.483
+  },
+  {
+    "region": "D",
+    "start": "2026-10-01T10:00:00Z",
+    "north_west": 26.65,
+    "regional": 28.08
+  },
+  {
+    "region": "D",
+    "start": "2026-10-01T15:00:00Z",
+    "north_west": 41.88,
+    "regional": 44.47
+  },
+  {
+    "region": "E",
+    "start": "2026-09-30T10:00:00Z",
+    "north_west": 17.4405,
+    "regional": 17.4405
+  },
+  {
+    "region": "E",
+    "start": "2026-09-30T15:00:00Z",
+    "north_west": 39.963,
+    "regional": 39.963
+  },
+  {
+    "region": "E",
+    "start": "2026-10-01T10:00:00Z",
+    "north_west": 26.65,
+    "regional": 26.65
+  },
+  {
+    "region": "E",
+    "start": "2026-10-01T15:00:00Z",
+    "north_west": 41.88,
+    "regional": 41.88
+  },
+  {
+    "region": "F",
+    "start": "2026-09-30T10:00:00Z",
+    "north_west": 17.4405,
+    "regional": 17.4405
+  },
+  {
+    "region": "F",
+    "start": "2026-09-30T15:00:00Z",
+    "north_west": 39.963,
+    "regional": 39.963
+  },
+  {
+    "region": "F",
+    "start": "2026-10-01T10:00:00Z",
+    "north_west": 26.65,
+    "regional": 26.65
+  },
+  {
+    "region": "F",
+    "start": "2026-10-01T15:00:00Z",
+    "north_west": 41.88,
+    "regional": 41.88
+  },
+  {
+    "region": "G",
+    "start": "2026-09-30T10:00:00Z",
+    "north_west": 17.4405,
+    "regional": 17.4405
+  },
+  {
+    "region": "G",
+    "start": "2026-09-30T15:00:00Z",
+    "north_west": 39.963,
+    "regional": 39.963
+  },
+  {
+    "region": "G",
+    "start": "2026-10-01T10:00:00Z",
+    "north_west": 26.65,
+    "regional": 26.65
+  },
+  {
+    "region": "G",
+    "start": "2026-10-01T15:00:00Z",
+    "north_west": 41.88,
+    "regional": 41.88
+  },
+  {
+    "region": "H",
+    "start": "2026-09-30T10:00:00Z",
+    "north_west": 17.4405,
+    "regional": 17.4405
+  },
+  {
+    "region": "H",
+    "start": "2026-09-30T15:00:00Z",
+    "north_west": 39.963,
+    "regional": 39.963
+  },
+  {
+    "region": "H",
+    "start": "2026-10-01T10:00:00Z",
+    "north_west": 26.65,
+    "regional": 26.65
+  },
+  {
+    "region": "H",
+    "start": "2026-10-01T15:00:00Z",
+    "north_west": 41.88,
+    "regional": 41.88
+  },
+  {
+    "region": "J",
+    "start": "2026-09-30T10:00:00Z",
+    "north_west": 17.4405,
+    "regional": 18.438
+  },
+  {
+    "region": "J",
+    "start": "2026-09-30T15:00:00Z",
+    "north_west": 39.963,
+    "regional": 41.433
+  },
+  {
+    "region": "J",
+    "start": "2026-10-01T10:00:00Z",
+    "north_west": 26.65,
+    "regional": 28.08
+  },
+  {
+    "region": "J",
+    "start": "2026-10-01T15:00:00Z",
+    "north_west": 41.88,
+    "regional": 43.47
+  },
+  {
+    "region": "K",
+    "start": "2026-09-30T10:00:00Z",
+    "north_west": 17.4405,
+    "regional": 18.438
+  },
+  {
+    "region": "K",
+    "start": "2026-09-30T15:00:00Z",
+    "north_west": 39.963,
+    "regional": 41.433
+  },
+  {
+    "region": "K",
+    "start": "2026-10-01T10:00:00Z",
+    "north_west": 26.65,
+    "regional": 28.08
+  },
+  {
+    "region": "K",
+    "start": "2026-10-01T15:00:00Z",
+    "north_west": 41.88,
+    "regional": 43.47
+  },
+  {
+    "region": "L",
+    "start": "2026-09-30T10:00:00Z",
+    "north_west": 17.4405,
+    "regional": 19.4355
+  },
+  {
+    "region": "L",
+    "start": "2026-09-30T15:00:00Z",
+    "north_west": 39.963,
+    "regional": 41.853
+  },
+  {
+    "region": "L",
+    "start": "2026-10-01T10:00:00Z",
+    "north_west": 26.65,
+    "regional": 29.51
+  },
+  {
+    "region": "L",
+    "start": "2026-10-01T15:00:00Z",
+    "north_west": 41.88,
+    "regional": 44.05
+  },
+  {
+    "region": "M",
+    "start": "2026-09-30T10:00:00Z",
+    "north_west": 17.4405,
+    "regional": 16.443
+  },
+  {
+    "region": "M",
+    "start": "2026-09-30T15:00:00Z",
+    "north_west": 39.963,
+    "regional": 39.543
+  },
+  {
+    "region": "M",
+    "start": "2026-10-01T10:00:00Z",
+    "north_west": 26.65,
+    "regional": 25.22
+  },
+  {
+    "region": "M",
+    "start": "2026-10-01T15:00:00Z",
+    "north_west": 41.88,
+    "regional": 41.3
+  },
+  {
+    "region": "N",
+    "start": "2026-09-30T10:00:00Z",
+    "north_west": 17.4405,
+    "regional": 17.4405
+  },
+  {
+    "region": "N",
+    "start": "2026-09-30T15:00:00Z",
+    "north_west": 39.963,
+    "regional": 41.013
+  },
+  {
+    "region": "N",
+    "start": "2026-10-01T10:00:00Z",
+    "north_west": 26.65,
+    "regional": 26.65
+  },
+  {
+    "region": "N",
+    "start": "2026-10-01T15:00:00Z",
+    "north_west": 41.88,
+    "regional": 42.88
+  },
+  {
+    "region": "P",
+    "start": "2026-09-30T10:00:00Z",
+    "north_west": 17.4405,
+    "regional": 20.433
+  },
+  {
+    "region": "P",
+    "start": "2026-09-30T15:00:00Z",
+    "north_west": 39.963,
+    "regional": 44.373
+  },
+  {
+    "region": "P",
+    "start": "2026-10-01T10:00:00Z",
+    "north_west": 26.65,
+    "regional": 30.94
+  },
+  {
+    "region": "P",
+    "start": "2026-10-01T15:00:00Z",
+    "north_west": 41.88,
+    "regional": 46.63
+  }
+]
