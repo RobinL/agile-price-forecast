@@ -265,10 +265,6 @@ select:focus-visible {
   outline: 2px solid #b36132;
   outline-offset: 4px;
 }
-#vg-tooltip-element {
-  font-family: system-ui;
-  font-size: 12px;
-}
 @media (max-width: 600px) {
   .period-fields {
     display: grid;

@@ -1,8 +1,15 @@
 import { expect, test } from "@playwright/test";
 import { readFileSync } from "node:fs";
+import { chartDays, type Slot } from "../../web/src/data";
 const fixture = JSON.parse(
   readFileSync("fixtures/site/data/forecast.json", "utf8"),
 );
+const daySlots = (day: string): Slot[] =>
+  fixture.slots.filter((slot: Slot) => slot.day === day);
+const cheapestSlot = (slots: Slot[]) =>
+  slots
+    .filter((slot) => slot.price !== null)
+    .reduce((best, slot) => (slot.price! < best.price! ? slot : best));
 
 test.use({
   viewport: { width: 390, height: 844 },
@@ -10,13 +17,27 @@ test.use({
   hasTouch: true,
 });
 
-test("touch reveals a price per chart, dragging updates it and edge labels stay inside", async ({
+test("each chart starts at its minimum; touch scans prices and edge labels stay inside", async ({
   page,
 }) => {
   await page.goto("/");
   const sliders = page.locator(".price-scrubber");
   await expect(sliders).toHaveCount(7);
-  await expect(page.locator(".scrubber-price:visible")).toHaveCount(0);
+  await expect(page.locator(".scrubber-price:not([hidden])")).toHaveCount(7);
+  const days = chartDays(fixture.slots);
+  for (const [index, day] of days.entries()) {
+    const cheapest = cheapestSlot(daySlots(day));
+    await expect(sliders.nth(index)).toHaveAttribute(
+      "data-start",
+      cheapest.start,
+    );
+    await expect(sliders.nth(index).locator(".scrubber-price")).toContainText(
+      `${cheapest.price!.toFixed(1)}p/kWh`,
+    );
+  }
+  await page.screenshot({
+    path: "test-results/mobile-price-readouts.png",
+  });
   const slider = sliders.first();
   await expect(slider).toHaveCSS("touch-action", "pan-y");
   const box = (await slider.boundingBox())!;
@@ -30,7 +51,10 @@ test("touch reveals a price per chart, dragging updates it and edge labels stay 
   await expect(slider.locator(".scrubber-price")).toHaveText(
     `6am: ${slot.price.toFixed(1)}p/kWh`,
   );
-  await expect(sliders.nth(1).locator(".scrubber-price")).toBeHidden();
+  await expect(sliders.nth(1)).toHaveAttribute(
+    "data-start",
+    cheapestSlot(daySlots(days[1])).start,
+  );
   const cdp = await page.context().newCDPSession(page);
   await cdp.send("Input.dispatchTouchEvent", {
     type: "touchStart",
@@ -56,10 +80,15 @@ test("touch reveals a price per chart, dragging updates it and edge labels stay 
     fullPage: true,
   });
   await page.setViewportSize({ width: 1280, height: 900 });
-  await expect(sliders).toHaveCount(0);
+  await expect(sliders).toHaveCount(7);
+  await expect(sliders.first().locator(".scrubber-price")).toContainText("–");
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(sliders.first().locator(".scrubber-price")).not.toContainText(
+    "–",
+  );
 });
 
-test("vertical touch scrolling is preserved without revealing the marker", async ({
+test("vertical touch scrolling preserves the initial minimum", async ({
   page,
 }) => {
   await page.goto("/");
@@ -81,7 +110,10 @@ test("vertical touch scrolling is preserved without revealing the marker", async
     touchPoints: [],
   });
   await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(20);
-  await expect(slider.locator(".scrubber-price")).toBeHidden();
+  await expect(slider).toHaveAttribute(
+    "data-start",
+    cheapestSlot(daySlots(fixture.slots[0].day)).start,
+  );
 });
 
 test("missing and negative prices are honest and keyboard controls work", async ({
@@ -101,6 +133,7 @@ test("missing and negative prices are honest and keyboard controls work", async 
   await page.goto("/");
   const slider = page.locator(".price-scrubber").first();
   await expect(page.locator(".price-scrubber")).toHaveCount(7);
+  await expect(slider).toHaveAttribute("data-start", data.slots[1].start);
   await slider.focus();
   await page.keyboard.press("Home");
   await expect(slider.locator(".scrubber-price")).toHaveText(
@@ -111,5 +144,120 @@ test("missing and negative prices are honest and keyboard controls work", async 
     "12:30am: -5.6p/kWh",
   );
   await page.keyboard.press("Escape");
-  await expect(slider.locator(".scrubber-price")).toBeHidden();
+  await expect(slider).toHaveAttribute("data-start", data.slots[1].start);
+  await expect(slider.locator(".scrubber-price")).toBeVisible();
+});
+
+test("a day with no prices starts with an unavailable readout", async ({
+  page,
+}) => {
+  const data = structuredClone(fixture);
+  for (const slot of data.slots.filter(
+    (slot: Slot) => slot.day === data.slots[0].day,
+  )) {
+    slot.price = null;
+    slot.status = slot.policy = "unavailable";
+  }
+  await page.route("**/data/forecast.json", (route) =>
+    route.fulfill({ json: data }),
+  );
+  await page.goto("/");
+  const slider = page.locator(".price-scrubber").first();
+  await expect(slider).toHaveAttribute("data-start", data.slots[0].start);
+  await expect(slider.locator(".scrubber-price")).toHaveText(
+    "12am: Unavailable",
+  );
+});
+
+test.describe("desktop readouts", () => {
+  test.use({
+    viewport: { width: 1280, height: 1000 },
+    isMobile: false,
+    hasTouch: false,
+    timezoneId: "America/Los_Angeles",
+  });
+
+  test("defaults to each day's minimum and mouse hover shows the full time slot", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    const sliders = page.locator(".price-scrubber");
+    await expect(sliders).toHaveCount(7);
+    const days = chartDays(fixture.slots);
+    for (const [index, day] of days.entries()) {
+      const cheapest = cheapestSlot(daySlots(day));
+      await expect(sliders.nth(index)).toHaveAttribute(
+        "data-start",
+        cheapest.start,
+      );
+      await expect(sliders.nth(index).locator(".scrubber-price")).toContainText(
+        `${cheapest.price!.toFixed(2)}p/kWh`,
+      );
+    }
+    await page.screenshot({
+      path: "test-results/desktop-price-readouts.png",
+    });
+    const slider = sliders.first();
+    const box = (await slider.boundingBox())!;
+    const slot = daySlots(days[0])[12];
+    await page.mouse.move(box.x + box.width * 0.26, box.y + 60);
+    await expect(slider).toHaveAttribute("data-start", slot.start);
+    await expect(slider.locator(".scrubber-price")).toHaveText(
+      `6am–6:30am: ${slot.price!.toFixed(2)}p/kWh · ${slot.status === "published" ? "published" : "estimated"}`,
+    );
+    await expect(page.locator("#vg-tooltip-element")).not.toBeVisible();
+    for (const fraction of [0.001, 0.999]) {
+      await page.mouse.move(box.x + box.width * fraction, box.y + 60);
+      const label = (await slider.locator(".scrubber-price").boundingBox())!;
+      expect(label.x).toBeGreaterThanOrEqual(box.x - 1);
+      expect(label.x + label.width).toBeLessThanOrEqual(box.x + box.width + 1);
+    }
+    await expect(slider.locator(".scrubber-price")).toContainText(
+      "11:30pm–12am:",
+    );
+    await page.getByLabel("Normalise prices").uncheck();
+    await expect(sliders.first()).toHaveAttribute(
+      "data-start",
+      cheapestSlot(daySlots(days[0])).start,
+    );
+    await expect(page.locator(".scrubber-price:not([hidden])")).toHaveCount(7);
+  });
+
+  test("repeated autumn half-hours retain their BST and GMT time slots", async ({
+    page,
+  }) => {
+    const data = structuredClone(fixture);
+    delete data.regions;
+    const midnight = Date.parse("2026-10-24T23:00:00Z");
+    data.issued_at = new Date(midnight).toISOString();
+    data.slots = Array.from({ length: 50 }, (_, index) => ({
+      ...fixture.slots[0],
+      start: new Date(midnight + index * 1800000).toISOString(),
+      end: new Date(midnight + (index + 1) * 1800000).toISOString(),
+      day: "2026-10-25",
+      minute: (index < 4 ? index : index - 2) * 30,
+      utc_offset_minutes: index < 4 ? 60 : 0,
+      price: index === 4 ? -6 : 10,
+      status: "predicted",
+      policy: "ensemble-experimental",
+    }));
+    await page.route("**/data/forecast.json", (route) =>
+      route.fulfill({ json: data }),
+    );
+    await page.goto("/");
+    const slider = page.locator(".price-scrubber");
+    await expect(slider).toHaveAttribute("data-start", data.slots[4].start);
+    await expect(slider.locator(".scrubber-price")).toHaveText(
+      "1am GMT–1:30am GMT: -6.00p/kWh · estimated",
+    );
+    await slider.focus();
+    await page.keyboard.press("ArrowLeft");
+    await expect(slider.locator(".scrubber-price")).toHaveText(
+      "1:30am BST–1am GMT: 10.00p/kWh · estimated",
+    );
+    await page.keyboard.press("ArrowLeft");
+    await expect(slider.locator(".scrubber-price")).toHaveText(
+      "1am BST–1:30am BST: 10.00p/kWh · estimated",
+    );
+  });
 });

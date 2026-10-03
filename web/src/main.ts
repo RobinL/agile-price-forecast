@@ -262,7 +262,7 @@ async function render(f: Forecast, loadedAt: Date) {
       {
         actions: false,
         renderer: "svg",
-        ...(compactLayout.matches ? { tooltip: false } : {}),
+        tooltip: false,
       },
     );
     if (version !== renderVersion) {
@@ -270,8 +270,9 @@ async function render(f: Forecast, loadedAt: Date) {
       return;
     }
     views.push(result);
-    if (compactLayout.matches)
-      scrubberCleanups.push(attachPriceScrubber(chart, result.view, slots));
+    scrubberCleanups.push(
+      attachPriceScrubber(chart, result.view, slots, compactLayout.matches),
+    );
   }
 }
 

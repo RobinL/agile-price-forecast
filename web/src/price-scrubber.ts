@@ -2,17 +2,43 @@ import type { View } from "vega";
 import { chartBars } from "./chart";
 import type { Slot } from "./data";
 
-// A touch-friendly slider over Vega's plot. It uses the same half-hour geometry
+// A pointer- and keyboard-friendly slider over Vega's plot, initially showing
+// the cheapest available half-hour. It uses the same half-hour geometry
 // as the bars, including missing prices and the repeated autumn clock hour.
 export function attachPriceScrubber(
   chart: HTMLElement,
   view: View,
   slots: Slot[],
+  compact = false,
 ) {
   const byStart = new Map(slots.map((slot) => [slot.start, slot]));
   const bands = chartBars(
     slots.map((slot) => ({ ...slot, price: slot.price ?? 0 })),
   );
+  if (!bands.length) return () => {};
+  const cheapest = bands.reduce((best, band, index) => {
+    const price = byStart.get(band.start)!.price;
+    const bestPrice = byStart.get(bands[best].start)!.price;
+    return price !== null && (bestPrice === null || price < bestPrice)
+      ? index
+      : best;
+  }, 0);
+  const showZones =
+    new Set(slots.map((slot) => slot.utc_offset_minutes)).size > 1;
+  const clockFormat = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/London",
+    hour: "numeric",
+    minute: "2-digit",
+    hourCycle: "h23",
+    timeZoneName: "short",
+  });
+  function timeAt(value: string) {
+    const parts = clockFormat.formatToParts(new Date(value));
+    const part = (type: string) => parts.find((p) => p.type === type)!.value;
+    const hour = Number(part("hour"));
+    const minute = part("minute");
+    return `${hour % 12 || 12}${minute === "00" ? "" : `:${minute}`}${hour < 12 ? "am" : "pm"}${showZones ? ` ${part("timeZoneName")}` : ""}`;
+  }
   const slider = document.createElement("div");
   slider.className = "price-scrubber";
   slider.tabIndex = 0;
@@ -23,11 +49,6 @@ export function attachPriceScrubber(
   );
   slider.setAttribute("aria-valuemin", "0");
   slider.setAttribute("aria-valuemax", String(bands.length - 1));
-  slider.setAttribute("aria-valuenow", "0");
-  slider.setAttribute(
-    "aria-valuetext",
-    "Touch or use arrow keys to explore prices",
-  );
   const line = document.createElement("div");
   line.className = "scrubber-line";
   const label = document.createElement("div");
@@ -36,7 +57,7 @@ export function attachPriceScrubber(
   line.hidden = label.hidden = true;
   slider.append(line, label);
   chart.append(slider);
-  let selected: number | undefined;
+  let selected = cheapest;
   let gesture:
     { id: number; x: number; y: number; dragging: boolean } | undefined;
   let frame = 0;
@@ -46,11 +67,22 @@ export function attachPriceScrubber(
     const band = bands[selected];
     const slot = byStart.get(band.start)!;
     const price =
-      slot.price === null ? "Unavailable" : `${slot.price.toFixed(1)}p/kWh`;
+      slot.price === null
+        ? "Unavailable"
+        : `${slot.price.toFixed(compact ? 1 : 2)}p/kWh`;
     const hour = Math.floor(slot.minute / 60);
     const minutes = slot.minute % 60;
     const time = `${hour % 12 || 12}${minutes ? `:${String(minutes).padStart(2, "0")}` : ""}${hour < 12 ? "am" : "pm"}`;
-    label.textContent = `${time}: ${price}`;
+    const timeRange = `${timeAt(slot.start)}–${timeAt(slot.end)}`;
+    const status =
+      slot.status === "predicted"
+        ? " · estimated"
+        : slot.status === "published"
+          ? " · published"
+          : "";
+    label.textContent = compact
+      ? `${time}: ${price}`
+      : `${timeRange}: ${price}${status}`;
     line.hidden = label.hidden = false;
     const x =
       ((band.band_start + band.band_end) / 2 / 1440) * slider.clientWidth;
@@ -59,10 +91,7 @@ export function attachPriceScrubber(
     const half = label.offsetWidth / 2;
     label.style.left = `${Math.max(half, Math.min(slider.clientWidth - half, x))}px`;
     slider.setAttribute("aria-valuenow", String(selected));
-    slider.setAttribute(
-      "aria-valuetext",
-      `${slot.clock}: ${price}${slot.status === "predicted" ? ", estimated" : ""}`,
-    );
+    slider.setAttribute("aria-valuetext", `${timeRange}: ${price}${status}`);
     slider.dataset.start = slot.start;
   }
   function selectAt(clientX: number) {
@@ -89,7 +118,7 @@ export function attachPriceScrubber(
         width: `${Number(view.signal("width")) * matrix.a}px`,
         height: `${Number(view.signal("height")) * matrix.d}px`,
       });
-      if (selected !== undefined) display(selected);
+      display(selected);
     });
   }
   slider.addEventListener("pointerdown", (event) => {
@@ -104,6 +133,10 @@ export function attachPriceScrubber(
     if (gesture.dragging) selectAt(event.clientX);
   });
   slider.addEventListener("pointermove", (event) => {
+    if (event.pointerType === "mouse" && !gesture) {
+      selectAt(event.clientX);
+      return;
+    }
     if (!gesture || gesture.id !== event.pointerId) return;
     const dx = Math.abs(event.clientX - gesture.x);
     const dy = Math.abs(event.clientY - gesture.y);
@@ -124,11 +157,10 @@ export function attachPriceScrubber(
   });
   slider.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
-      selected = undefined;
-      line.hidden = label.hidden = true;
+      display(cheapest);
       return;
     }
-    const index = selected ?? 0;
+    const index = selected;
     const next =
       event.key === "ArrowRight" || event.key === "ArrowUp"
         ? index + 1
