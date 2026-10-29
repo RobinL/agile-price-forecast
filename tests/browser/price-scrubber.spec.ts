@@ -21,12 +21,20 @@ test("each chart starts at its minimum; touch scans prices and edge labels stay 
   page,
 }) => {
   await page.goto("/");
+  await page.getByLabel("Show past prices").check();
   const sliders = page.locator(".price-scrubber");
   await expect(sliders).toHaveCount(7);
   await expect(page.locator(".scrubber-price:not([hidden])")).toHaveCount(7);
   const days = chartDays(fixture.slots);
   for (const [index, day] of days.entries()) {
-    const cheapest = cheapestSlot(daySlots(day));
+    const cheapest =
+      index === 0
+        ? daySlots(day).find(
+            (s) =>
+              Date.parse(s.start) <= Date.parse(fixture.issued_at) &&
+              Date.parse(s.end) > Date.parse(fixture.issued_at),
+          )!
+        : cheapestSlot(daySlots(day));
     await expect(sliders.nth(index)).toHaveAttribute(
       "data-start",
       cheapest.start,
@@ -92,6 +100,7 @@ test("vertical touch scrolling preserves the initial minimum", async ({
   page,
 }) => {
   await page.goto("/");
+  await page.getByLabel("Show past prices").check();
   const slider = page.locator(".price-scrubber").first();
   await expect(page.locator(".price-scrubber")).toHaveCount(7);
   const box = (await slider.boundingBox())!;
@@ -112,7 +121,9 @@ test("vertical touch scrolling preserves the initial minimum", async ({
   await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(20);
   await expect(slider).toHaveAttribute(
     "data-start",
-    cheapestSlot(daySlots(fixture.slots[0].day)).start,
+    daySlots(fixture.slots[0].day).find(
+      (s) => Date.parse(s.start) === Date.parse(fixture.issued_at),
+    )!.start,
   );
 });
 
@@ -131,9 +142,10 @@ test("missing and negative prices are honest and keyboard controls work", async 
     route.fulfill({ json: data }),
   );
   await page.goto("/");
+  await page.getByLabel("Show past prices").check();
   const slider = page.locator(".price-scrubber").first();
   await expect(page.locator(".price-scrubber")).toHaveCount(7);
-  await expect(slider).toHaveAttribute("data-start", data.slots[1].start);
+  await expect(slider).toHaveAttribute("data-start", data.slots[20].start);
   await slider.focus();
   await page.keyboard.press("Home");
   await expect(slider.locator(".scrubber-price")).toHaveText(
@@ -144,7 +156,7 @@ test("missing and negative prices are honest and keyboard controls work", async 
     "12:30am: -5.6p/kWh",
   );
   await page.keyboard.press("Escape");
-  await expect(slider).toHaveAttribute("data-start", data.slots[1].start);
+  await expect(slider).toHaveAttribute("data-start", data.slots[20].start);
   await expect(slider.locator(".scrubber-price")).toBeVisible();
 });
 
@@ -163,9 +175,9 @@ test("a day with no prices starts with an unavailable readout", async ({
   );
   await page.goto("/");
   const slider = page.locator(".price-scrubber").first();
-  await expect(slider).toHaveAttribute("data-start", data.slots[0].start);
+  await expect(slider).toHaveAttribute("data-start", data.slots[20].start);
   await expect(slider.locator(".scrubber-price")).toHaveText(
-    "12am: Unavailable",
+    "Now: 10am: Unavailable",
   );
 });
 
@@ -181,17 +193,25 @@ test.describe("desktop readouts", () => {
     page,
   }) => {
     await page.goto("/");
+    await page.getByLabel("Show past prices").check();
     const sliders = page.locator(".price-scrubber");
     await expect(sliders).toHaveCount(7);
     const days = chartDays(fixture.slots);
     for (const [index, day] of days.entries()) {
-      const cheapest = cheapestSlot(daySlots(day));
+      const cheapest =
+        index === 0
+          ? daySlots(day).find(
+              (s) =>
+                Date.parse(s.start) <= Date.parse(fixture.issued_at) &&
+                Date.parse(s.end) > Date.parse(fixture.issued_at),
+            )!
+          : cheapestSlot(daySlots(day));
       await expect(sliders.nth(index)).toHaveAttribute(
         "data-start",
         cheapest.start,
       );
       await expect(sliders.nth(index).locator(".scrubber-price")).toContainText(
-        `${cheapest.price!.toFixed(2)}p/kWh`,
+        `${cheapest.price!.toFixed(1)}p/kWh`,
       );
     }
     await page.screenshot({
@@ -203,7 +223,7 @@ test.describe("desktop readouts", () => {
     await page.mouse.move(box.x + box.width * 0.26, box.y + 60);
     await expect(slider).toHaveAttribute("data-start", slot.start);
     await expect(slider.locator(".scrubber-price")).toHaveText(
-      `6am–6:30am: ${slot.price!.toFixed(2)}p/kWh · ${slot.status === "published" ? "published" : "estimated"}`,
+      `6am–6:30am: ${slot.price!.toFixed(1)}p/kWh`,
     );
     await expect(page.locator("#vg-tooltip-element")).not.toBeVisible();
     for (const fraction of [0.001, 0.999]) {
@@ -218,7 +238,9 @@ test.describe("desktop readouts", () => {
     await page.getByLabel("Normalise prices").uncheck();
     await expect(sliders.first()).toHaveAttribute(
       "data-start",
-      cheapestSlot(daySlots(days[0])).start,
+      daySlots(days[0]).find(
+        (s) => Date.parse(s.start) === Date.parse(fixture.issued_at),
+      )!.start,
     );
     await expect(page.locator(".scrubber-price:not([hidden])")).toHaveCount(7);
   });
@@ -246,18 +268,22 @@ test.describe("desktop readouts", () => {
     );
     await page.goto("/");
     const slider = page.locator(".price-scrubber");
+    await page.getByLabel("Show past prices").check();
+    await slider.focus();
+    await page.keyboard.press("End");
+    for (let i = 0; i < 45; i++) await page.keyboard.press("ArrowLeft");
     await expect(slider).toHaveAttribute("data-start", data.slots[4].start);
     await expect(slider.locator(".scrubber-price")).toHaveText(
-      "1am GMT–1:30am GMT: -6.00p/kWh · estimated",
+      "1am GMT–1:30am GMT: -6.0p/kWh",
     );
     await slider.focus();
     await page.keyboard.press("ArrowLeft");
     await expect(slider.locator(".scrubber-price")).toHaveText(
-      "1:30am BST–1am GMT: 10.00p/kWh · estimated",
+      "1:30am BST–1am GMT: 10.0p/kWh",
     );
     await page.keyboard.press("ArrowLeft");
     await expect(slider.locator(".scrubber-price")).toHaveText(
-      "1am BST–1:30am BST: 10.00p/kWh · estimated",
+      "1am BST–1:30am BST: 10.0p/kWh",
     );
   });
 });

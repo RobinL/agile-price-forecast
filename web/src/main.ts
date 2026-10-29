@@ -5,13 +5,11 @@ import {
 } from "./published-prices";
 import embed, { type Result } from "vega-embed";
 import { chartSpec, priceDomain, PRICE_COLOURS } from "./chart";
-import { cheapestPeriods, type CheapPeriod } from "./cheap-periods";
 import {
   forRegion,
   chartDays,
   dayTitle,
   londonDay,
-  londonTime,
   parseForecast,
   type Forecast,
 } from "./data";
@@ -110,80 +108,6 @@ function updateNotice(f: Forecast) {
   if (description) notice.append(document.createTextNode(` · ${description}`));
 }
 
-function showPeriods(
-  periods: CheapPeriod[],
-  enabled: boolean,
-  count: number,
-  days: string[],
-) {
-  const results = byId("period-results");
-  results.replaceChildren();
-  if (!enabled) return;
-  if (periods.length < count)
-    results.append(
-      element(
-        "p",
-        "period-help",
-        periods.length
-          ? `Only ${periods.length} complete periods available.`
-          : "No complete future periods are available for this length.",
-      ),
-    );
-  const weekday = (day: string) =>
-    new Intl.DateTimeFormat("en-GB", {
-      weekday: "short",
-      timeZone: "Europe/London",
-    }).format(new Date(`${day}T12:00:00Z`));
-  // Include overnight endpoints when deciding whether a weekday is ambiguous.
-  const mentionedDays = [
-    ...new Set([
-      ...days,
-      ...periods.flatMap((period) => [
-        londonDay(new Date(period.start)),
-        londonDay(new Date(period.end)),
-      ]),
-    ]),
-  ].sort();
-  const dayName = (day: string) => {
-    const name = weekday(day);
-    const matches = mentionedDays.filter((date) => weekday(date) === name);
-    return matches.length > 1
-      ? `${day === matches[0] ? "This" : "Next"} ${name}`
-      : name;
-  };
-  const clock = (value: string) =>
-    new Intl.DateTimeFormat("en-GB", {
-      hour: "2-digit",
-      minute: "2-digit",
-      timeZone: "Europe/London",
-      hourCycle: "h23",
-    }).format(new Date(value));
-  for (const [index, period] of periods.entries()) {
-    const startDay = londonDay(new Date(period.start));
-    const endDay = londonDay(new Date(period.end));
-    const timeRange = `${dayName(startDay)} ${clock(period.start)}–${startDay === endDay ? "" : `${dayName(endDay)} `}${clock(period.end)}`;
-    const link = document.createElement("a");
-    link.className = "period-choice";
-    link.href = `#day-${startDay}`;
-    link.title = `Average price: ${period.meanPrice.toFixed(2)}p/kWh`;
-    link.append(element("span", "period-rank", String(index + 1)));
-    const text = element("span", "");
-    text.append(
-      element("span", "period-time", timeRange),
-      document.createTextNode(" · "),
-    );
-    text.append(
-      element(
-        "span",
-        "period-price",
-        `${period.meanPrice.toFixed(2)}p/kWh${period.includesPredictions ? " (est.)" : ""}`,
-      ),
-    );
-    link.append(text);
-    results.append(link);
-  }
-}
-
 async function render(f: Forecast, loadedAt: Date) {
   const version = ++renderVersion;
   scrubberCleanups.splice(0).forEach((cleanup) => cleanup());
@@ -198,26 +122,16 @@ async function render(f: Forecast, loadedAt: Date) {
   const normalise = (byId("normalise-prices") as HTMLInputElement).checked;
   const domain = priceDomain(f.slots);
   const days = chartDays(f.slots);
-  const enabled = (byId("highlight-enabled") as HTMLInputElement).checked;
-  const countControl = byId("period-count") as HTMLSelectElement;
-  const hoursControl = byId("period-hours") as HTMLSelectElement;
-  countControl.disabled = hoursControl.disabled = !enabled;
-  byId("highlight-legend").hidden = !enabled;
-  byId("period-count-field").hidden = !enabled;
-  byId("period-hours-field").hidden = !enabled;
-  const count = Number(countControl.value);
-  const periods = enabled
-    ? cheapestPeriods(
-        f.slots.filter((s) => days.includes(s.day)),
-        count,
-        Number(hoursControl.value),
-        f.mode === "live" ? loadedAt : new Date(f.issued_at),
-      )
-    : [];
-  showPeriods(periods, enabled, count, days);
+  const showPast = (byId("show-past-prices") as HTMLInputElement).checked;
+  const now = f.mode === "live" ? new Date() : new Date(f.issued_at);
   byId("days").replaceChildren();
   for (const day of days) {
-    const slots = f.slots.filter((s) => s.day === day);
+    const isToday = day === reference;
+    const slots = f.slots.filter(
+      (s) =>
+        s.day === day &&
+        (!isToday || showPast || Date.parse(s.end) > now.getTime()),
+    );
     const section = element("section", "day-card");
     section.id = `day-${day}`;
     const heading = element("div", "day-heading");
@@ -252,10 +166,8 @@ async function render(f: Forecast, loadedAt: Date) {
       chartSpec(
         slots,
         normalise ? domain : priceDomain(slots, true),
-        f.mode === "live" && day === londonDay(loadedAt)
-          ? londonTime(loadedAt)
-          : undefined,
-        periods,
+        undefined,
+        [],
         compactLayout.matches,
         !normalise,
       ),
@@ -271,7 +183,13 @@ async function render(f: Forecast, loadedAt: Date) {
     }
     views.push(result);
     scrubberCleanups.push(
-      attachPriceScrubber(chart, result.view, slots, compactLayout.matches),
+      attachPriceScrubber(
+        chart,
+        result.view,
+        slots,
+        compactLayout.matches,
+        isToday ? now : undefined,
+      ),
     );
   }
 }
@@ -343,12 +261,7 @@ colourLabels.append(
   }),
 );
 byId("price-legend").replaceChildren(gradient, colourLabels);
-for (const id of [
-  "highlight-enabled",
-  "normalise-prices",
-  "period-count",
-  "period-hours",
-]) {
+for (const id of ["show-past-prices", "normalise-prices"]) {
   byId(id).addEventListener("change", () => {
     if (current && currentLoadedAt) void render(current, currentLoadedAt);
   });

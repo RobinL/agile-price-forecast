@@ -125,43 +125,36 @@ test("the development server cannot serve repository internals", async ({
   expect(response.status()).toBe(403);
 });
 
-test("today marks the London time at load and refresh, with gaps only where missing", async ({
+test("today hides past prices and starts at the current slot", async ({
   page,
 }) => {
-  // Browser runs in a different timezone; the marker must still use London time.
   await page.clock.setFixedTime(new Date("2026-09-18T12:17:30Z"));
   await page.route("**/data/forecast.json", async (route) => {
-    const response = await route.fetch();
-    const f = await response.json();
+    const f = await (await route.fetch()).json();
     f.mode = "live";
-    f.slots[0] = {
-      ...f.slots[0],
-      price: null,
-      status: "unavailable",
-      policy: "unavailable",
-    };
     await route.fulfill({ json: f });
   });
   await page.goto("/");
-  await expect(page.locator(".price-chart svg")).toHaveCount(7);
   const today = page.locator(".day-card").first();
-  await expect(today.getByText("Now 13:17", { exact: true })).toBeVisible();
-  await expect(page.locator(".day-coverage")).toHaveCount(1);
-  await expect(today).toContainText("1 half-hour unavailable");
-  await expect(
-    page.getByText(
-      /Shown range|Forecast notes and accuracy comparison|half-hours ·/,
-    ),
-  ).toHaveCount(0);
-  const rule = today.locator(".current_time_marks line");
-  await expect(rule).toHaveCount(1);
-  // This is the London clock minute, not the browser timezone or issue time.
-  await expect(rule).toHaveAttribute("aria-label", "minute: 797.5");
+  const slider = today.locator(".price-scrubber");
+  await expect(slider).toHaveAttribute(
+    "data-start",
+    "2026-09-18T12:00:00+00:00",
+  );
+  await expect(slider.locator(".scrubber-price")).toContainText(
+    "Now: 1pm–1:30pm:",
+  );
+  const bars = today.locator(".price_bars_marks path");
+  await expect(bars).toHaveCount(22);
+  await page.getByLabel("Show past prices").check();
+  await expect(bars).toHaveCount(48);
+  await expect(slider.locator(".scrubber-price")).toContainText(
+    "Now: 1pm–1:30pm:",
+  );
   await page.clock.setFixedTime(new Date("2026-09-18T13:42:00Z"));
   await page.reload();
-  await expect(today.getByText("Now 14:42", { exact: true })).toBeVisible();
-  await expect(page.locator(".day-card").nth(1).getByText(/^Now /)).toHaveCount(
-    0,
+  await expect(today.locator(".scrubber-price")).toContainText(
+    "Now: 2:30pm–3pm:",
   );
 });
 
@@ -196,81 +189,6 @@ test("full clock-change days stay visible and partial final dates are omitted", 
     expect(chartDays(slots)).toEqual([slots[0].day]);
     expect(chartDays(slots.slice(0, -1))).toEqual([]);
   }
-});
-
-test("cheapest-period controls update bars across the whole forecast without fetching again", async ({
-  page,
-}) => {
-  let fetches = 0;
-  page.on("request", (r) => {
-    if (r.url().endsWith("data/forecast.json")) fetches++;
-  });
-  await page.goto("/");
-  await expect(page.locator(".price-chart svg")).toHaveCount(7);
-  await expect(
-    page.getByRole("checkbox", { name: "Highlight cheapest periods" }),
-  ).not.toBeChecked();
-  await expect(page.locator("#period-count")).toBeHidden();
-  await expect(page.locator("#period-hours")).toBeHidden();
-  await expect(page.locator(".period-choice")).toHaveCount(0);
-  await page
-    .getByRole("checkbox", { name: "Highlight cheapest periods" })
-    .check();
-  await expect(
-    page.getByRole("combobox", { name: "Number of cheapest periods" }),
-  ).toHaveValue("2");
-  await expect(page.locator("#period-hours")).toHaveValue("3");
-  await expect(page.locator(".period-choice")).toHaveCount(2);
-  // Retain the overnight rendering check using one two-hour period.
-  await page.locator("#period-count").selectOption("1");
-  await page.locator("#period-hours").selectOption("2");
-  await expect(page.locator(".period-choice")).toHaveCount(1);
-  // The cheapest fixture period straddles midnight: each day needs its own
-  // boundaries and badge, with the same rank on both charts.
-  await expect(page.locator(".cheap_periods_marks path")).toHaveCount(2);
-  await expect(page.locator(".highlight_badges_marks path")).toHaveCount(2);
-  await expect(page.locator(".highlight_edges_marks line")).toHaveCount(4);
-  await expect(page.locator(".highlight_numbers_marks text")).toHaveText([
-    "1",
-    "1",
-  ]);
-  await expect(page.locator(".price_bars_marks path").first()).toBeVisible();
-  await page
-    .getByRole("combobox", { name: "Number of cheapest periods" })
-    .selectOption("5");
-  await expect(page.locator(".period-choice")).toHaveCount(5);
-  const numbers = page.locator(".highlight_numbers_marks text");
-  await expect
-    .poll(async () => [...new Set(await numbers.allTextContents())].sort())
-    .toEqual(["1", "2", "3", "4", "5"]);
-  const regions = await numbers.count();
-  await expect(page.locator(".cheap_periods_marks path")).toHaveCount(regions);
-  await expect(page.locator(".highlight_badges_marks path")).toHaveCount(
-    regions,
-  );
-  await expect(page.locator(".highlight_edges_marks line")).toHaveCount(
-    2 * regions,
-  );
-  const previousPeriods = await page
-    .locator(".period-choice")
-    .allTextContents();
-  await page.getByRole("combobox", { name: "Period length" }).selectOption("3");
-  await expect
-    .poll(() => page.locator(".period-choice").allTextContents())
-    .not.toEqual(previousPeriods);
-  await expect
-    .poll(async () => [...new Set(await numbers.allTextContents())].sort())
-    .toEqual(["1", "2", "3", "4", "5"]);
-  await page
-    .getByRole("checkbox", { name: "Highlight cheapest periods" })
-    .uncheck();
-  await expect(page.locator(".cheap_periods_marks path")).toHaveCount(0);
-  await expect(page.locator(".highlight_edges_marks line")).toHaveCount(0);
-  await expect(page.locator(".highlight_numbers_marks text")).toHaveCount(0);
-  await expect(page.locator(".period-choice")).toHaveCount(0);
-  await expect(page.locator("#period-count")).toBeHidden();
-  await expect(page.locator("#period-hours")).toBeHidden();
-  expect(fetches).toBe(1);
 });
 
 test("am/pm labels adapt on resize, stay aligned and do not overlap", async ({

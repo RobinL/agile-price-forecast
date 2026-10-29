@@ -10,6 +10,7 @@ export function attachPriceScrubber(
   view: View,
   slots: Slot[],
   compact = false,
+  now?: Date,
 ) {
   const byStart = new Map(slots.map((slot) => [slot.start, slot]));
   const bands = chartBars(
@@ -57,7 +58,17 @@ export function attachPriceScrubber(
   line.hidden = label.hidden = true;
   slider.append(line, label);
   chart.append(slider);
-  let selected = cheapest;
+  const current = now
+    ? bands.findIndex((band) => {
+        const slot = byStart.get(band.start)!;
+        return (
+          Date.parse(slot.start) <= now.getTime() &&
+          now.getTime() < Date.parse(slot.end)
+        );
+      })
+    : -1;
+  const initial = current >= 0 ? current : cheapest;
+  let selected = initial;
   let gesture:
     { id: number; x: number; y: number; dragging: boolean } | undefined;
   let frame = 0;
@@ -67,22 +78,14 @@ export function attachPriceScrubber(
     const band = bands[selected];
     const slot = byStart.get(band.start)!;
     const price =
-      slot.price === null
-        ? "Unavailable"
-        : `${slot.price.toFixed(compact ? 1 : 2)}p/kWh`;
+      slot.price === null ? "Unavailable" : `${slot.price.toFixed(1)}p/kWh`;
     const hour = Math.floor(slot.minute / 60);
     const minutes = slot.minute % 60;
     const time = `${hour % 12 || 12}${minutes ? `:${String(minutes).padStart(2, "0")}` : ""}${hour < 12 ? "am" : "pm"}`;
     const timeRange = `${timeAt(slot.start)}–${timeAt(slot.end)}`;
-    const status =
-      slot.status === "predicted"
-        ? " · estimated"
-        : slot.status === "published"
-          ? " · published"
-          : "";
-    label.textContent = compact
-      ? `${time}: ${price}`
-      : `${timeRange}: ${price}${status}`;
+    const prefix = selected === current ? "Now: " : "";
+    label.textContent =
+      prefix + (compact ? `${time}: ${price}` : `${timeRange}: ${price}`);
     line.hidden = label.hidden = false;
     const x =
       ((band.band_start + band.band_end) / 2 / 1440) * slider.clientWidth;
@@ -91,7 +94,7 @@ export function attachPriceScrubber(
     const half = label.offsetWidth / 2;
     label.style.left = `${Math.max(half, Math.min(slider.clientWidth - half, x))}px`;
     slider.setAttribute("aria-valuenow", String(selected));
-    slider.setAttribute("aria-valuetext", `${timeRange}: ${price}${status}`);
+    slider.setAttribute("aria-valuetext", `${prefix}${timeRange}: ${price}`);
     slider.dataset.start = slot.start;
   }
   function selectAt(clientX: number) {
@@ -157,7 +160,7 @@ export function attachPriceScrubber(
   });
   slider.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
-      display(cheapest);
+      display(initial);
       return;
     }
     const index = selected;

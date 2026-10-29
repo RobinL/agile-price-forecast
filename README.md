@@ -2,7 +2,7 @@
 
 **[View the live forecast](https://www.robinlinacre.com/agile-price-forecast/)**
 
-An experimental website showing a week of half-hourly Agile electricity prices in aligned daily charts, with optional highlights for the cheapest periods. Published prices are shown where available; the model estimates the rest.
+An experimental website showing a week of half-hourly Agile electricity prices in aligned daily charts, with an option to show earlier prices. Published prices are shown where available; the model estimates the rest.
 
 Prices are for Region G, including VAT and excluding standing charges. Forecasts can be wrong or delayed: check published prices with your supplier before relying on them.
 
